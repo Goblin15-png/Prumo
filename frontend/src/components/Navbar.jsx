@@ -46,11 +46,11 @@ export default function Navbar({
             className="flex items-center gap-3 cursor-pointer group"
           >
             <div className="w-10 h-10 sm:w-[72px] sm:h-[72px] shrink-0 flex items-center justify-center group-hover:scale-105 transition">
-              <img src="/Protocolo.png" alt="Logo Protocolo Cuidar" className="w-full h-full object-contain" />
+              <img src="/pruma-essential.svg" alt="Logo Pruma Essential" className="w-full h-full object-contain" />
             </div>
             <div className="hidden lg:flex flex-col">
               <span className="font-serif tracking-widest text-xl xl:text-3xl font-medium uppercase text-white leading-tight">
-                PROTOCOLO CUIDAR
+                PRUMA ESSENTIAL
               </span>
             </div>
           </div>

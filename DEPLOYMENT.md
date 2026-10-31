@@ -4,7 +4,7 @@ O projeto usa Laravel 12 no backend e React/Vite no frontend. A loja definitiva 
 
 É possível preparar a hospedagem e homologar catálogo/painel com pagamento e frete sem credenciais: o pagamento fica indisponível e a cotação informa que ainda não foi configurada. Isso não habilita compras. Não ative `LOCAL_TEST_MODE` em servidor público; a simulação fica no ambiente local isolado de `testes/`.
 
-Decisão de 19/10/2026: frontend React/Vite na **Vercel**, backend Laravel em **hospedagem PHP** e **PostgreSQL gerenciado**, acessado pelo backend. Os provedores do Laravel e do PostgreSQL, domínios e regras de rede ainda não foram escolhidos. Configuração, requisitos de acesso e backups em [POSTGRESQL.md](POSTGRESQL.md). O ambiente local existente não foi convertido nem seus dados migrados.
+Decisão atual de 31/10/2026: frontend React/Vite na **Vercel**, backend Laravel em **hospedagem PHP** e **MySQL**, acessado pelo backend. Os provedores do Laravel e do MySQL, domínios e regras de rede ainda não foram escolhidos. Configuração, requisitos de acesso e backups em [MYSQL.md](MYSQL.md). O ambiente local existente não foi convertido nem seus dados migrados.
 
 ## Frontend na Vercel
 
@@ -23,13 +23,13 @@ São regras adicionais: preserve as rotas de interface já existentes. Nenhuma U
 
 Na Vercel, use `VITE_API_BASE_URL=/api/v1` ou deixe-a ausente (padrão de produção). No Laravel, `FRONTEND_URL` deve ser a origem HTTPS real da loja, `APP_URL` a URL HTTPS do backend, `SANCTUM_STATEFUL_DOMAINS` o host da loja sem protocolo e `SESSION_DOMAIN` vazio/nulo para cookies por host no proxy. Preserve `SESSION_HTTP_ONLY=true`, `SESSION_SECURE_COOKIE=true` e `SESSION_SAME_SITE=lax`. Valide cookies, CSRF, MFA, redirecionamentos, IP original/rate limiting e ausência de cache compartilhado nas respostas autenticadas através do proxy em homologação.
 
-Os ambientes Preview da Vercel devem usar backend e PostgreSQL de homologação separados, sem credenciais, integrações ou dados de produção. A origem autorizada no Laravel é exata; configurar a Vercel não autoriza automaticamente todo domínio `*.vercel.app`.
+Os ambientes Preview da Vercel devem usar backend e MySQL de homologação separados, sem credenciais, integrações ou dados de produção. A origem autorizada no Laravel é exata; configurar a Vercel não autoriza automaticamente todo domínio `*.vercel.app`.
 
 Se for escolhida chamada direta a um subdomínio da API, será preciso configurar domínio próprio compartilhado, CORS e cookies; simplesmente combinar `*.vercel.app` com um backend em outro domínio não atende ao requisito de sessão SPA do Sanctum. Esse caminho também exige encaminhamento local separado para o `<noscript>` do GTM. Referências: [Vite na Vercel](https://vercel.com/docs/frameworks/frontend/vite), [encaminhamento de requisições](https://vercel.com/docs/routing/rewrites) e [sessão SPA do Sanctum](https://laravel.com/framework/docs/12.x/sanctum#spa-authentication).
 
 ## Hospedagem e domínio
 
-- Use uma hospedagem com PHP 8.2+, extensão `pdo_pgsql`, Composer e HTTPS, além de worker de filas e agendamento do Laravel.
+- Use uma hospedagem com PHP 8.2+, extensão `pdo_mysql`, Composer e HTTPS, além de worker de filas e agendamento do Laravel.
 - Aponte o document root do backend somente para `backend/public`. Nunca publique a raiz do repositório, `.env`, `vendor`, `database` ou arquivos de backup.
 - Compile o frontend com `npm ci` e `npm run build` dentro de `frontend`; publique o conteúdo de `frontend/dist` como frontend estático.
 - A configuração padrão do frontend chama a API no mesmo domínio em `/api/v1`. Configure o servidor para encaminhar `/api/v1` e `/sanctum` ao Laravel e permitir fallback da navegação SPA. Se frontend e API usarem subdomínios diferentes, defina `VITE_API_BASE_URL` antes do build e configure CORS, `SANCTUM_STATEFUL_DOMAINS` e `SESSION_DOMAIN` para os domínios reais.

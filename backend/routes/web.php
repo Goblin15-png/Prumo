@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return response()->json([
-        'message' => 'API Protocolo Cuidar está funcionando.',
+        'message' => 'API Pruma Essential está funcionando.',
         'version' => 'v1',
     ]);
 });

@@ -76,7 +76,7 @@ try {
     await page.getByPlaceholder('seuemail@exemplo.com').fill(`${profile}@example.invalid`);
     await page.getByPlaceholder('Sua senha').fill(credentials.password);
     const response = page.waitForResponse((response) => response.url() === `${base}/api/v1/${administrative ? 'admin/auth/login' : 'login'}` && response.request().method() === 'POST');
-    await page.getByRole('button', { name: administrative ? 'Entrar no painel' : 'Entrar no Protocolo Cuidar', exact: true }).click();
+    await page.getByRole('button', { name: administrative ? 'Entrar no painel' : 'Entrar no Pruma Essential', exact: true }).click();
     const result = await response;
     assert.equal(result.status(), 200, 'Login pela interface falhou.');
   };

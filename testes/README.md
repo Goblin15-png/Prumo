@@ -26,7 +26,7 @@ npm --prefix frontend run build    # build exclusivo da loja e painel
 
 Para executar PHP diretamente: dentro de `backend/`, use `php vendor/bin/phpunit --configuration ../testes/backend/phpunit.xml`. A configuração PHPUnit fica fora do backend; Use o comando acima em vez de `php artisan test`, pois o wrapper do Artisan procura a configuração na pasta do backend.
 
-A suíte força SQLite em memória e `DB_URL` vazio, mesmo quando existe uma URL de banco no ambiente. `PostgresMigrationSqlTest` verifica SQL gerado para PostgreSQL sem conexão externa; não substitui homologação em PostgreSQL real. A configuração de produção e seus limites estão em [POSTGRESQL.md](../POSTGRESQL.md).
+A suíte força SQLite em memória e `DB_URL` vazio, mesmo quando existe uma URL de banco no ambiente. `PostgresMigrationSqlTest` verifica SQL gerado para PostgreSQL sem conexão externa; não substitui homologação em PostgreSQL real. A configuração alvo atual e seus limites estão em [MYSQL.md](../MYSQL.md). `MySqlConfigurationTest` verifica Unicode, modo estrito, verificação TLS quando o driver está disponível e isolamento SQLite, sem abrir conexão MySQL.
 
 A demo visual não exige backend, cadastro ou dados reais. Os dados são fictícios, as alterações ficam em memória e se perdem ao recarregar. A preferência de tema fica em cookie. A prévia integrada cria um SQLite novo em diretório temporário e bloqueia serviços externos; Ctrl+C encerra e descarta os dados. A demo visual deve ser iniciada separadamente na porta 4174.
 

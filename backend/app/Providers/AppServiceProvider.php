@@ -71,7 +71,7 @@ class AppServiceProvider extends ServiceProvider
             ]
         ));
         VerifyEmail::toMailUsing(fn ($user, string $url) => (new MailMessage)
-            ->subject('Confirme seu email — Protocolo Cuidar')
+            ->subject('Confirme seu email — Pruma Essential')
             ->greeting('Olá, '.$user->name)
             ->line('Confirme este endereço para liberar as compras na sua conta.')
             ->action('Confirmar email', $url)

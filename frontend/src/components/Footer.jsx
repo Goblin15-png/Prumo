@@ -52,7 +52,7 @@ export default function Footer() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-ink-faint">
-        <p>© 2026 Protocolo Cuidar - Farmácia Botânica & Terapias Naturais. Todos os direitos reservados.</p>
+        <p>© 2026 Pruma Essential - Farmácia Botânica & Terapias Naturais. Todos os direitos reservados.</p>
         <div className="flex gap-6">
           <a href="#" className="hover:text-white transition">Sobre Nós</a>
           <a href="#" className="hover:text-white transition">Política de Privacidade</a>

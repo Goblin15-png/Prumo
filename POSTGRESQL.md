@@ -1,3 +1,5 @@
+> **Referência histórica:** a configuração alvo atual é MySQL, conforme solicitação de 31/10/2026. Consulte [MYSQL.md](MYSQL.md). O suporte PostgreSQL existente é preservado, mas não é a configuração de implantação atual.
+
 # PostgreSQL gerenciado
 
 Decisão de 19/10/2026: React na Vercel, Laravel em hospedagem PHP e PostgreSQL gerenciado. Provedores do backend e do banco ainda pendentes. Este documento prepara a configuração; nenhuma conta externa, regra de firewall, backup ou banco de produção foi criado.

@@ -88,7 +88,7 @@ export default function DemoStudio({ standalone = false }) {
   return <div className="min-h-screen bg-canvas font-sans text-ink">
     <header className="bg-[#5E1A2B] px-4 py-4 text-white sm:px-8">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
-        <div><p className="font-serif text-2xl font-bold tracking-wide">PROTOCOLO CUIDAR</p><p className="text-xs text-stone-200">Laboratório visual · dados inteiramente fictícios</p></div>
+        <div><p className="font-serif text-2xl font-bold tracking-wide">PRUMA ESSENTIAL</p><p className="text-xs text-stone-200">Laboratório visual · dados inteiramente fictícios</p></div>
         <div className="flex items-center gap-3"><span className="rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-xs font-semibold">Somente Vite local · Sem APIs reais</span><ThemeToggle /></div>
       </div>
     </header>

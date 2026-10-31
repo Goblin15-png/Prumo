@@ -90,7 +90,7 @@ try {
     await page.getByPlaceholder('seuemail@exemplo.com').fill(`${profile}@example.invalid`);
     await page.getByPlaceholder('Sua senha').fill(credentials.password);
     const response = page.waitForResponse(`${base}/api/v1/${admin ? 'admin/auth/login' : 'login'}`);
-    await page.getByRole('button', { name: admin ? 'Entrar no painel' : 'Entrar no Protocolo Cuidar', exact: true }).click();
+    await page.getByRole('button', { name: admin ? 'Entrar no painel' : 'Entrar no Pruma Essential', exact: true }).click();
     assert.equal((await response).status(), 200, 'Login da conta fictícia falhou.');
   };
   await customer.goto(base);

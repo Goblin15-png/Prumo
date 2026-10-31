@@ -99,7 +99,7 @@ class ShippingQuoteTest extends TestCase
                 ->assertExactJson(['message' => 'A cotação de frete ainda não está configurada.']);
             config(['services.melhor_envio.'.$key => $original]);
         }
-        config(['services.melhor_envio.user_agent' => 'Protocolo Cuidar (suporte@seudominio.com.br)']);
+        config(['services.melhor_envio.user_agent' => 'Pruma Essential (suporte@seudominio.com.br)']);
         $this->postJson('/api/v1/shipping/calculate', $this->payload($product))->assertStatus(503);
         Http::assertNothingSent();
     }
