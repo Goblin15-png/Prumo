@@ -76,3 +76,7 @@ O teste inicia seu próprio servidor estático local e intercepta todas as APIs 
 ### Recuperação de checkout e frete
 
 `browser/browser-checkout.mjs` contém doze cenários com o build real e API/SDK simulados. Além dos cenários anteriores, verifica repetição de cotação indisponível, invalidação do frete recusado antes de uma nova seleção, retomada de pagamento com sacola vazia após recarga, consulta de pedido já enviado e pago, isolamento de UUID por cliente e funcionamento em memória com `sessionStorage` bloqueado. Retomar/consultar não pode emitir um novo POST de cobrança. Nenhuma requisição financeira ou logística é enviada aos provedores. O teste não homologa Mercado Pago, Melhor Envio, MySQL ou o backend Laravel real.
+
+### Cadastro e operação do catálogo
+
+Depois do build da loja, execute `PLAYWRIGHT_MODULE=/caminho/playwright/index.mjs node testes/browser/browser-admin-catalog.mjs`. A suíte usa um servidor estático local próprio, bloqueia rede externa e intercepta as APIs com catálogo fictício. Verifica dimensões inteiras e peso com três casas, estoque fracionado sem truncamento, limites numéricos existentes, embalagem opcional, falha/repetição das opções, ingredientes distintos, validação preservando os campos, bloqueio de envio duplicado e fechamento durante gravação, recarga do catálogo e avisos de estoque/embalagem. Não altera nem consulta dados comerciais reais e não substitui a suíte Laravel.

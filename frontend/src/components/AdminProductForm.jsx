@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { X, Plus, Trash2, Save, Sparkles, Leaf } from 'lucide-react';
 
 const createInitialFormData = (product) => ({
@@ -24,6 +24,10 @@ const createInitialFormData = (product) => ({
 });
 
 export default function AdminProductForm({ isOpen, onClose, onProductSaved, existingProduct = null, service }) {
+  const saving = useRef(false);
+  const taxonomyRequest = useRef(0);
+  const [taxonomyLoading, setTaxonomyLoading] = useState(true);
+  const [taxonomyError, setTaxonomyError] = useState('');
   const [formData, setFormData] = useState(() => createInitialFormData(existingProduct));
 
   const [imageUrls, setImageUrls] = useState(() => (existingProduct?.images || []).join('\n'));
@@ -48,14 +52,28 @@ export default function AdminProductForm({ isOpen, onClose, onProductSaved, exis
     setNewIngredientBenefits('');
   }, [isOpen, existingProduct?.id]);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    service.get('/admin/taxonomy').then(({ data }) => {
+  const loadTaxonomy = useCallback(async () => {
+    const request = ++taxonomyRequest.current;
+    setTaxonomyLoading(true);
+    setTaxonomyError('');
+    try {
+      const { data } = await service.get('/admin/taxonomy');
+      if (request !== taxonomyRequest.current) return;
       setAvailableTags(data.tags || []);
       setAvailableSymptoms(data.symptoms || []);
       setAvailableIngredients(data.ingredients || []);
-    }).catch(() => setError('Não foi possível carregar as opções do formulário.'));
-  }, [isOpen, service]);
+    } catch {
+      if (request === taxonomyRequest.current) setTaxonomyError('Não foi possível carregar as opções do formulário. Tente novamente antes de salvar.');
+    } finally {
+      if (request === taxonomyRequest.current) setTaxonomyLoading(false);
+    }
+  }, [service]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    loadTaxonomy();
+    return () => { taxonomyRequest.current += 1; };
+  }, [isOpen, loadTaxonomy]);
 
   if (!isOpen) return null;
   const imageList = imageUrls.split('\n').map((url) => url.trim()).filter(Boolean);
@@ -132,6 +150,7 @@ export default function AdminProductForm({ isOpen, onClose, onProductSaved, exis
     setFormData((prev) => {
       const updated = [...prev.ingredients];
       if (field === 'id') {
+        if (prev.ingredients.some((row, position) => position !== index && row.id === Number(value))) return prev;
         const found = availableIngredients.find((i) => i.id === Number(value));
         updated[index] = { ...updated[index], id: Number(value), name: found?.name || '' };
       } else {
@@ -143,12 +162,14 @@ export default function AdminProductForm({ isOpen, onClose, onProductSaved, exis
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (saving.current || taxonomyLoading || taxonomyError) return;
     const images = imageUrls.split('\n').map((url) => url.trim()).filter(Boolean);
     if (images.length > 8) {
       setError('Cadastre no máximo 8 imagens por produto.');
       return;
     }
-    const payload = { ...formData, images };
+    const payload = { ...formData, stock: Number(formData.stock), images };
+    saving.current = true;
     setLoading(true);
     setError(null);
 
@@ -168,6 +189,7 @@ export default function AdminProductForm({ isOpen, onClose, onProductSaved, exis
       const firstValidationError = Object.values(err.response?.data?.errors || {}).flat()[0];
       setError(firstValidationError || err.response?.data?.message || 'Falha ao salvar produto no catálogo.');
     } finally {
+      saving.current = false;
       setLoading(false);
     }
   };
@@ -188,6 +210,7 @@ export default function AdminProductForm({ isOpen, onClose, onProductSaved, exis
           </div>
           <button
             onClick={onClose}
+            disabled={loading}
             aria-label="Fechar formulário do blend"
             className="p-1 rounded-full text-ink-faint hover:text-ink-secondary hover:bg-surface-strong/50 transition"
           >
@@ -196,21 +219,27 @@ export default function AdminProductForm({ isOpen, onClose, onProductSaved, exis
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded-xl bg-danger-soft text-danger-ink text-xs border border-danger-line">
+          <div role="alert" className="mb-4 p-3 rounded-xl bg-danger-soft text-danger-ink text-xs border border-danger-line">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {taxonomyLoading && <p role="status" className="mb-4 text-sm text-ink-muted">Carregando opções do blend…</p>}
+        {taxonomyError && <div role="alert" className="mb-4 space-y-2 rounded-xl border border-warning-line bg-warning-soft p-3 text-sm text-warning-ink"><p>{taxonomyError}</p><button type="button" onClick={loadTaxonomy} className="rounded-lg border border-current px-3 py-2">Recarregar opções do blend</button></div>}
+
+        <form onSubmit={handleSubmit} aria-busy={loading}>
+          <fieldset disabled={loading || taxonomyLoading || Boolean(taxonomyError)} className="min-w-0 space-y-4">
           
           {/* Nome e Preço */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-ink-secondary mb-1">
+              <label htmlFor="blend-name" className="block text-xs font-semibold text-ink-secondary mb-1">
                 Nome do Produto / Blend *
               </label>
               <input
+                id="blend-name"
                 type="text"
+                maxLength={180}
                 required
                 placeholder="Ex: Aroma Sono Reparador 10ml"
                 value={formData.name}
@@ -220,11 +249,14 @@ export default function AdminProductForm({ isOpen, onClose, onProductSaved, exis
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-ink-secondary mb-1">
+              <label htmlFor="blend-price" className="block text-xs font-semibold text-ink-secondary mb-1">
                 Preço (R$) *
               </label>
               <input
+                id="blend-price"
                 type="number"
+                min="0"
+                max="99999999.99"
                 step="0.01"
                 required
                 placeholder="229.90"
@@ -238,14 +270,18 @@ export default function AdminProductForm({ isOpen, onClose, onProductSaved, exis
           {/* Estoque e Dor Alvo */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-ink-secondary mb-1">
-                Estoque Inicial (unidades)
+              <label htmlFor="blend-stock" className="block text-xs font-semibold text-ink-secondary mb-1">
+                {existingProduct ? 'Estoque disponível (unidades)' : 'Estoque inicial (unidades)'}
               </label>
               <input
+                id="blend-stock"
                 type="number"
                 min="0"
+                max="1000000"
+                step="1"
+                required
                 value={formData.stock}
-                onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
+                onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
                 className="w-full bg-surface border border-line-strong rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-brand-ink outline-none"
               />
             </div>
@@ -290,8 +326,9 @@ export default function AdminProductForm({ isOpen, onClose, onProductSaved, exis
                   {label}
                   <input
                     type="number"
-                    min="0.001"
-                    step="0.01"
+                    min={name === 'shipping_weight_kg' ? '0.001' : '0.01'}
+                    step={name === 'shipping_weight_kg' ? '0.001' : '0.01'}
+                    max={name === 'shipping_weight_kg' ? '1000' : '500'}
                     inputMode="decimal"
                     value={formData[name]}
                     onChange={(e) => setFormData((prev) => ({ ...prev, [name]: e.target.value }))}
@@ -435,12 +472,13 @@ export default function AdminProductForm({ isOpen, onClose, onProductSaved, exis
               {formData.ingredients.map((ingRow, idx) => (
                 <div key={idx} className="flex items-center gap-2 bg-surface p-2.5 rounded-xl border border-line">
                   <select
+                    aria-label={`Ingrediente ${idx + 1}`}
                     value={ingRow.id}
                     onChange={(e) => handleIngredientChange(idx, 'id', e.target.value)}
                     className="flex-1 bg-surface-muted border border-line-strong rounded-lg px-2.5 py-1.5 text-xs outline-none focus:ring-1 focus:ring-brand-ink"
                   >
                     {availableIngredients.map((item) => (
-                      <option key={item.id} value={item.id}>
+                      <option key={item.id} value={item.id} disabled={formData.ingredients.some((row, position) => position !== idx && row.id === item.id)}>
                         {item.name}
                       </option>
                     ))}
@@ -448,6 +486,7 @@ export default function AdminProductForm({ isOpen, onClose, onProductSaved, exis
 
                   <input
                     type="text"
+                    aria-label={`Concentração do ingrediente ${idx + 1}`}
                     placeholder="40%"
                     value={ingRow.percentage}
                     onChange={(e) => handleIngredientChange(idx, 'percentage', e.target.value)}
@@ -500,6 +539,7 @@ export default function AdminProductForm({ isOpen, onClose, onProductSaved, exis
             </button>
           </div>
 
+          </fieldset>
         </form>
       </div>
     </div>

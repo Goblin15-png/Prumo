@@ -109,3 +109,13 @@ O logout bloqueia envios duplicados e informa quando não foi possível confirma
 O diálogo de autenticação tem rótulos associados, foco contido, retorno ao botão de origem e rolagem interna em telas pequenas. Escape fecha quando não há envio em andamento nem códigos de recuperação aguardando confirmação. MFA expirado permite **Recomeçar acesso** com email preservado e senha/códigos limpos; senha e chave de configuração deixam de ser necessárias na interface após a etapa correspondente. Não há cadastro público de administradores.
 
 A verificação de navegador `testes/browser/browser-admin-access.mjs` usa o build real com API inteiramente simulada, sem chamadas externas. Ela não comprova autenticação Laravel, entrega de emails, validade criptográfica do MFA ou execução no MySQL. Execute também os testes PHP e a integração real isolada antes da homologação.
+
+## Revisão do catálogo — 31/10/2026
+
+O cadastro/edição de blends aceita dimensões de embalagem com duas casas decimais em centímetros e peso com três casas decimais em quilogramas, conforme a precisão já usada no banco. Medidas como 8 cm e 0,125 kg não são rejeitadas pelo incremento do campo. Estoque exige número inteiro e não é truncado ao digitar; preço, estoque, medidas e peso seguem os limites já declarados pelo servidor. Preço e estoque zero continuam permitidos pelo contrato atual e embalagem continua opcional no cadastro.
+
+Se as opções de ingredientes/tags/queixas falharem, o formulário oferece nova tentativa e bloqueia o salvamento até carregá-las. Durante o envio, os campos e botões de fechamento ficam bloqueados; eventos duplicados de envio são ignorados. Erros de validação aparecem como alerta e preservam os valores para correção. Um ingrediente já selecionado em outra linha fica indisponível para impedir duplicação; a API mantém a validação autoritativa.
+
+A listagem distingue carregamento, falha e catálogo vazio, permite atualização manual e avisa sobre estoque indisponível, preço zero e embalagem incompleta. Esses avisos são informativos: não constituem homologação de venda, aprovação comercial nem garantia de frete. A área de categorias e a seleção múltipla de queixas permanecem separadas do cadastro de blend.
+
+A verificação `testes/browser/browser-admin-catalog.mjs` usa dados fictícios e APIs interceptadas. Ela cobre embalagem, números inválidos, recuperação de falhas, prevenção de duplicação e apresentação operacional; não valida persistência Laravel/MySQL.
