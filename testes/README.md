@@ -62,3 +62,13 @@ O preenchimento por CEP também pode ser experimentado nessa prévia: digite `00
 Para consultar **CEPs reais pelo ViaCEP**, execute `npm --prefix testes run local -- --real-cep` (ou `npm --prefix testes run local -- 4181 --real-cep` para outra porta). Essa opção libera apenas consultas de endereço ao ViaCEP; catálogo, contas, frete e pagamento continuam simulados, sem cobranças ou etiquetas. O aviso na tela identifica essa diferença. O site definitivo usa ViaCEP por padrão; Correios oficial continua disponível por configuração em `../CORREIOS_CEP.md`. O Melhor Envio real é configurado separadamente conforme `../MELHOR_ENVIO.md`.
 
 `browser/browser-postal-code-live.mjs` confere o preenchimento no navegador usando a prévia `--real-cep` na porta 4180 e o CEP público de exemplo do ViaCEP (`01001-000`). Esse teste é optativo, exige rede e não cria pedidos; use as mesmas variáveis do Playwright dos demais testes. A suíte automática habitual continua isolada.
+
+### Acesso e sessão do painel
+
+Após compilar `frontend/`, execute:
+
+```bash
+PLAYWRIGHT_MODULE=/caminho/playwright/index.mjs node testes/browser/browser-admin-access.mjs
+```
+
+O teste inicia seu próprio servidor estático local e intercepta todas as APIs com dados fictícios. Cobre login móvel e teclado, configuração MFA e códigos de recuperação, reinício de desafio expirado, limpeza do painel/formulário após 401/419 ou revogação explícita, distinção de 403 por operação e erro temporário, repetição da verificação inicial, perfil técnico, permissões de métricas/IA, logout sem duplicação, resposta de identidade atrasada, limite de tentativas e solicitação de recuperação de senha. Não valida a criptografia MFA, SMTP nem o backend real. `AdminPermissionsTest` verifica os códigos de reautenticação no Laravel e preserva a distinção em relação aos Gates por operação.
