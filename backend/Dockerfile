@@ -1,8 +1,8 @@
-FROM php:8.3-apache
+FROM php:8.4-apache
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git unzip libicu-dev libonig-dev libpq-dev libzip-dev \
-    && docker-php-ext-install -j"$(nproc)" bcmath intl mbstring pdo_mysql pdo_pgsql zip \
+    git unzip libicu-dev libonig-dev libpq-dev libzip-dev libxml2-dev \
+    && docker-php-ext-install -j"$(nproc)" bcmath dom intl mbstring pdo_mysql pdo_pgsql zip \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
