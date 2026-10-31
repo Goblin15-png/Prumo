@@ -1,0 +1,24 @@
+# Segredos e dados locais
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.*.example
+**/auth.json
+**/*.sqlite
+**/*.sqlite-*
+**/*.db
+**/*.log
+
+# Dependências e arquivos gerados
+**/node_modules/
+backend/vendor/
+frontend/dist/
+testes/dist/
+testes/.local/
+backend/public/build/
+backend/public/hot
+backend/public/storage
+backend/storage/
+backend/bootstrap/cache/*.php
+backend/.phpunit.cache/
+backend/.phpunit.result.cache

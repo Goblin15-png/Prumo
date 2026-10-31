@@ -1,0 +1,14 @@
+{
+  "name": "protocolo-cuidar-demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "npm run dev",
+    "dev": "node ../frontend/node_modules/vite/bin/vite.js --config vite.config.js",
+    "build": "node ../frontend/node_modules/vite/bin/vite.js build --config vite.config.js",
+    "preview": "node ../frontend/node_modules/vite/bin/vite.js preview --config vite.config.js",
+    "test": "node --test demo/*.test.js",
+    "local": "node scripts/local-preview.mjs",
+    "test:php": "cd ../backend && php vendor/bin/phpunit --configuration ../testes/backend/phpunit.xml"
+  }
+}

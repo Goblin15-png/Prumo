@@ -1,0 +1,137 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+@theme inline {
+  --color-canvas: var(--ui-canvas);
+  --color-surface: var(--ui-surface);
+  --color-surface-muted: var(--ui-surface-muted);
+  --color-surface-subtle: var(--ui-surface-subtle);
+  --color-surface-strong: var(--ui-surface-strong);
+  --color-surface-active: var(--ui-surface-active);
+  --color-ink: var(--ui-ink);
+  --color-ink-strong: var(--ui-ink-strong);
+  --color-ink-secondary: var(--ui-ink-secondary);
+  --color-ink-muted: var(--ui-ink-muted);
+  --color-ink-soft: var(--ui-ink-soft);
+  --color-ink-faint: var(--ui-ink-faint);
+  --color-line: var(--ui-line);
+  --color-line-muted: var(--ui-line-muted);
+  --color-line-strong: var(--ui-line-strong);
+  --color-line-active: var(--ui-line-active);
+  --color-brand-ink: var(--ui-brand-ink);
+  --color-brand-strong: var(--ui-brand-strong);
+  --color-image-surface: var(--ui-image-surface);
+  --color-image-ink: var(--ui-image-ink);
+  --color-success-soft: var(--ui-success-soft);
+  --color-success-subtle: var(--ui-success-subtle);
+  --color-success-ink: var(--ui-success-ink);
+  --color-success-line: var(--ui-success-line);
+  --color-warning-soft: var(--ui-warning-soft);
+  --color-warning-subtle: var(--ui-warning-subtle);
+  --color-warning-ink: var(--ui-warning-ink);
+  --color-warning-line: var(--ui-warning-line);
+  --color-warning-line-strong: var(--ui-warning-line-strong);
+  --color-danger-soft: var(--ui-danger-soft);
+  --color-danger-subtle: var(--ui-danger-subtle);
+  --color-danger-ink: var(--ui-danger-ink);
+  --color-danger-line: var(--ui-danger-line);
+  --color-info-soft: var(--ui-info-soft);
+  --color-info-ink: var(--ui-info-ink);
+  --color-info-line: var(--ui-info-line);
+}
+
+:root {
+  color-scheme: light;
+  --ui-canvas: #faf8f5;
+  --ui-surface: #ffffff;
+  --ui-surface-muted: #fafaf9;
+  --ui-surface-subtle: #f5f5f4;
+  --ui-surface-strong: #e7e5e4;
+  --ui-surface-active: #d6d3d1;
+  --ui-ink: #292524;
+  --ui-ink-strong: #1c1917;
+  --ui-ink-secondary: #44403c;
+  --ui-ink-muted: #57534e;
+  --ui-ink-soft: #78716c;
+  --ui-ink-faint: #78716c;
+  --ui-line: #e7e5e4;
+  --ui-line-muted: #f5f5f4;
+  --ui-line-strong: #d6d3d1;
+  --ui-line-active: #a8a29e;
+  --ui-brand-ink: #5e1a2b;
+  --ui-brand-strong: #4a1422;
+  --ui-image-surface: #b5bcb6;
+  --ui-image-ink: #3d4b41;
+  --ui-success-soft: #ecfdf5;
+  --ui-success-subtle: #d1fae5;
+  --ui-success-ink: #065f46;
+  --ui-success-line: #a7f3d0;
+  --ui-warning-soft: #fffbeb;
+  --ui-warning-subtle: #fef3c7;
+  --ui-warning-ink: #92400e;
+  --ui-warning-line: #fde68a;
+  --ui-warning-line-strong: #fcd34d;
+  --ui-danger-soft: #fef2f2;
+  --ui-danger-subtle: #fee2e2;
+  --ui-danger-ink: #b91c1c;
+  --ui-danger-line: #fecaca;
+  --ui-info-soft: #f0f9ff;
+  --ui-info-ink: #0c4a6e;
+  --ui-info-line: #bae6fd;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ui-canvas: #16191b;
+  --ui-surface: #202528;
+  --ui-surface-muted: #252b2e;
+  --ui-surface-subtle: #2b3236;
+  --ui-surface-strong: #374146;
+  --ui-surface-active: #48545b;
+  --ui-ink: #f0ede8;
+  --ui-ink-strong: #faf8f5;
+  --ui-ink-secondary: #ddd8d1;
+  --ui-ink-muted: #c7c0b8;
+  --ui-ink-soft: #b1aaa2;
+  --ui-ink-faint: #aaa49d;
+  --ui-line: #3b4449;
+  --ui-line-muted: #30383d;
+  --ui-line-strong: #526067;
+  --ui-line-active: #74858e;
+  --ui-brand-ink: #f3b5c8;
+  --ui-brand-strong: #ffcede;
+  --ui-image-surface: #34423c;
+  --ui-image-ink: #d7e2da;
+  --ui-success-soft: #142f27;
+  --ui-success-subtle: #1a4033;
+  --ui-success-ink: #a7f3d0;
+  --ui-success-line: #386b56;
+  --ui-warning-soft: #352b1c;
+  --ui-warning-subtle: #46381f;
+  --ui-warning-ink: #fcd68c;
+  --ui-warning-line: #735b32;
+  --ui-warning-line-strong: #92733e;
+  --ui-danger-soft: #39232a;
+  --ui-danger-subtle: #4a2933;
+  --ui-danger-ink: #fda4af;
+  --ui-danger-line: #79434f;
+  --ui-info-soft: #1b3040;
+  --ui-info-ink: #b5dfff;
+  --ui-info-line: #3e6079;
+}
+
+@layer base {
+  html, body { background-color: var(--ui-canvas); color: var(--ui-ink); }
+  :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    background-color: var(--ui-surface);
+    color: var(--ui-ink);
+  }
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+h1, h2, h3, .font-serif {
+  font-family: 'Playfair Display', Georgia, serif;
+}
