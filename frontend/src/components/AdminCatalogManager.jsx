@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { adminApi as api } from '../services/api';
 import { Pencil, Plus, Trash2, X } from 'lucide-react';
 
 export default function AdminCatalogManager({ onEditProduct, onProductsChanged, onProductDeleted, refreshKey = 0 }) {
+  const requestVersion = useRef(0);
+  const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState([]);
   const [tags, setTags] = useState([]);
   const [ingredients, setIngredients] = useState([]);
@@ -14,22 +16,31 @@ export default function AdminCatalogManager({ onEditProduct, onProductsChanged, 
   const [error, setError] = useState('');
 
   const load = async () => {
+    const request = ++requestVersion.current;
+    setLoading(true);
+    setError('');
     try {
       const [catalog, taxonomy] = await Promise.all([
         api.get('/admin/products'),
         api.get('/admin/taxonomy'),
       ]);
+      if (request !== requestVersion.current) return;
       setProducts(catalog.data.products || []);
       onProductsChanged?.(catalog.data.products || []);
       setTags(taxonomy.data.tags || []);
       setIngredients(taxonomy.data.ingredients || []);
       setError('');
     } catch (err) {
-      setError(err.response?.data?.message || 'Não foi possível carregar a gestão do catálogo.');
+      if (request === requestVersion.current) setError(err.response?.data?.message || 'Não foi possível carregar a gestão do catálogo.');
+    } finally {
+      if (request === requestVersion.current) setLoading(false);
     }
   };
 
-  useEffect(() => { load(); }, [refreshKey]);
+  useEffect(() => {
+    load();
+    return () => { requestVersion.current += 1; };
+  }, [refreshKey]);
 
   const remove = async (type, id, name) => {
     const label = type === 'products' ? 'blend' : 'tag';
@@ -72,6 +83,8 @@ export default function AdminCatalogManager({ onEditProduct, onProductsChanged, 
         <h2 className="text-xl font-serif font-bold text-brand-ink">Gerenciar blends, ingredientes e tags</h2>
         <p className="text-xs text-ink-soft mt-1">Em Todos os blends, use Editar para alterar dados, fotos e ingredientes, ou Excluir para remover um produto. Você também pode ocultá-lo da vitrine desmarcando Exibir este produto no formulário.</p>
       </div>
+      <button type="button" disabled={loading} onClick={load} className="rounded-lg border border-line-strong px-3 py-2 text-xs font-semibold disabled:opacity-50">{loading ? 'Atualizando catálogo…' : 'Atualizar catálogo'}</button>
+      {loading && <p role="status" className="text-xs text-ink-soft">Carregando blends, ingredientes e tags…</p>}
       {error && <p role="alert" className="p-3 rounded-xl bg-danger-soft text-danger-ink text-xs">{error}</p>}
 
       <div className="grid grid-cols-1 gap-5">
@@ -103,7 +116,7 @@ export default function AdminCatalogManager({ onEditProduct, onProductsChanged, 
           <button type="submit" disabled={savingIngredient} className="rounded-lg bg-[#5E1A2B] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">{savingIngredient ? 'Salvando…' : 'Criar ingrediente'}</button>
         </form>
         <ul className="flex flex-wrap gap-2 text-xs">{ingredients.map((ingredient) => <li key={ingredient.id} className="rounded-full bg-surface-subtle px-3 py-1">{ingredient.name}</li>)}</ul>
-        {!ingredients.length && <p className="text-xs text-ink-soft">Nenhum ingrediente cadastrado.</p>}
+        {!loading && !error && !ingredients.length && <p className="text-xs text-ink-soft">Nenhum ingrediente cadastrado.</p>}
       </section>
 
       <div className="border-t border-line pt-5">
@@ -114,6 +127,11 @@ export default function AdminCatalogManager({ onEditProduct, onProductsChanged, 
               <div className="min-w-0">
                 <p className="text-xs font-bold text-ink truncate">{product.name}</p>
                 <p className="text-[11px] text-ink-soft">R$ {Number(product.price).toFixed(2).replace('.', ',')} · Estoque {product.stock} · {product.is_active ? 'Ativo' : 'Inativo'}</p>
+                <ul aria-label={`Revisão de ${product.name}`} className="mt-1 space-y-1 text-[11px] text-warning-ink">
+                  {Number(product.stock) <= 0 && <li>Sem estoque disponível.</li>}
+                  {Number(product.price) === 0 && <li>Preço zero: revise antes de vender.</li>}
+                  {['shipping_width_cm', 'shipping_height_cm', 'shipping_length_cm', 'shipping_weight_kg'].some((field) => !Number.isFinite(Number(product[field])) || Number(product[field]) <= 0) && <li>Embalagem incompleta para cotação de frete.</li>}
+                </ul>
               </div>
               <div className="flex shrink-0 gap-2">
                 <button onClick={() => onEditProduct(product)} aria-label={`Editar ${product.name}`} className="inline-flex items-center gap-1 rounded-lg border border-line px-2 py-2 text-xs hover:bg-surface-subtle text-ink-muted"><Pencil className="w-4 h-4" />Editar</button>
@@ -121,7 +139,7 @@ export default function AdminCatalogManager({ onEditProduct, onProductsChanged, 
               </div>
             </div>
           ))}
-          {!products.length && <p className="py-4 text-xs text-ink-soft">Nenhum blend cadastrado no servidor ainda.</p>}
+          {!loading && !error && !products.length && <p className="py-4 text-xs text-ink-soft">Nenhum blend cadastrado no servidor ainda.</p>}
         </div>
       </div>
     </section>
