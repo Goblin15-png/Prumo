@@ -88,13 +88,13 @@ export default function AdminDashboard({ user, onOpenProductForm, onEditProduct,
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface p-6 rounded-3xl border border-line shadow-xs">
         <div>
           <span className="text-[10px] uppercase tracking-widest text-brand-ink font-bold bg-brand-ink/10 px-3 py-1 rounded-full">
-            Painel do Lojista & Farmacêutico
+            Administração • Pruma Essential
           </span>
           <h1 className="text-2xl sm:text-3xl font-serif text-brand-ink font-bold mt-2">
-            Gestão Estratégica & Métricas de Saúde
+            Gestão da loja
           </h1>
           <p className="text-xs text-ink-soft mt-1">
-            Consulte os relatos do questionário opcional, seus canais de aquisição e públicos para planejar o catálogo.
+            Gerencie blends, categorias, pedidos e os indicadores disponíveis para sua conta.
           </p>
         </div>
         {can('products.create') && <button
@@ -107,15 +107,25 @@ export default function AdminDashboard({ user, onOpenProductForm, onEditProduct,
         </button>}
       </div>
 
-      {can('orders.view') && <a href="#admin-pedidos" className="inline-block rounded-xl bg-[#5E1A2B] px-4 py-3 text-sm font-semibold text-white">Gerenciar pedidos</a>}
+      <nav aria-label="Áreas do painel" className="flex flex-wrap gap-2">
+        {[
+          ['orders.view', 'admin-pedidos', 'Gerenciar pedidos'],
+          ['products.view', 'admin-blends', 'Blends e ingredientes'],
+          ['categories.view', 'admin-categorias', 'Categorias'],
+          ['taxonomy.view', 'admin-queixas', 'Queixas e alvos'],
+          ['health.view', 'admin-metricas', 'Métricas'],
+          ['insights.generate', 'admin-insights', 'Assistente de IA'],
+        ].filter(([permission]) => can(permission)).map(([, id, label]) => <a key={id} href={`#${id}`} className="rounded-xl border border-line-strong bg-surface px-4 py-3 text-sm font-semibold text-brand-ink hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2">{label}</a>)}
+      </nav>
 
-      {can('taxonomy.view') && <AdminComplaintsManager service={api} onChanged={() => { setTaxonomyRefresh((key) => key + 1); if (can('health.view')) fetchMetrics(); }} />}
-      {can('categories.view') && <AdminCategoryManager service={api} onCategoriesChanged={onCategoriesChanged} onProductsChanged={onProductsChanged} refreshKey={catalogRefreshKey} />}
-      {can('products.view') && <AdminCatalogManager onEditProduct={onEditProduct} onProductsChanged={onProductsChanged} onProductDeleted={onProductDeleted} refreshKey={`${catalogRefreshKey}-${taxonomyRefresh}`} />}
+      {can('taxonomy.view') && <div id="admin-queixas" className="scroll-mt-6"><AdminComplaintsManager service={api} onChanged={() => { setTaxonomyRefresh((key) => key + 1); if (can('health.view')) fetchMetrics(); }} /></div>}
+      {can('categories.view') && <div id="admin-categorias" className="scroll-mt-6"><AdminCategoryManager service={api} onCategoriesChanged={onCategoriesChanged} onProductsChanged={onProductsChanged} refreshKey={catalogRefreshKey} /></div>}
+      {can('products.view') && <div id="admin-blends" className="scroll-mt-6"><AdminCatalogManager onEditProduct={onEditProduct} onProductsChanged={onProductsChanged} onProductDeleted={onProductDeleted} refreshKey={`${catalogRefreshKey}-${taxonomyRefresh}`} /></div>}
       {can('orders.view') && <AdminOrderManager service={api} workflow={orderWorkflow} canUpdateFulfillment={can('orders.fulfillment.update')} />}
 
       {/* SECÇÃO 1: MÉTRICAS DE DEMANDAS DOS CLIENTES */}
-      {can('health.view') && <button type="button" onClick={fetchMetrics} disabled={loadingMetrics} className="inline-flex items-center gap-2 rounded-xl border border-line-strong bg-surface px-4 py-2 text-xs font-semibold disabled:opacity-50"><RefreshCw className="h-4 w-4" />{loadingMetrics ? 'Atualizando métricas…' : 'Atualizar métricas'}</button>}
+      {can('health.view') && <section id="admin-metricas" aria-label="Métricas consentidas" className="scroll-mt-6 space-y-6">
+      <button type="button" onClick={fetchMetrics} disabled={loadingMetrics} className="inline-flex items-center gap-2 rounded-xl border border-line-strong bg-surface px-4 py-2 text-xs font-semibold disabled:opacity-50"><RefreshCw className="h-4 w-4" />{loadingMetrics ? 'Atualizando métricas…' : 'Atualizar métricas'}</button>
       {metricsError && <p role="alert" className="rounded-xl border border-warning-line bg-warning-soft p-3 text-sm text-warning-ink">{metricsError}</p>}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
@@ -204,10 +214,11 @@ export default function AdminDashboard({ user, onOpenProductForm, onEditProduct,
 
       </div>
 
-      {can('health.view') && <AdminAudienceReport metrics={metrics} />}
+      <AdminAudienceReport metrics={metrics} />
+      </section>}
 
       {/* SECÇÃO 2: MÓDULO ANDROMEDA (GEMINI AI INSIGHTS) */}
-      <div className="bg-gradient-to-br from-amber-50/40 via-white to-stone-50 p-6 sm:p-8 rounded-3xl border border-warning-line/60 shadow-xs space-y-6">
+      {can('insights.generate') && <section id="admin-insights" aria-label="Assistente de estratégia" className="scroll-mt-6 bg-surface p-6 sm:p-8 rounded-3xl border border-warning-line/60 shadow-xs space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-warning-ink bg-warning-subtle/60 px-3 py-1 rounded-full w-fit">
@@ -268,7 +279,7 @@ export default function AdminDashboard({ user, onOpenProductForm, onEditProduct,
 
           </div>
         )}
-      </div>
+      </section>}
 
     </div>
   );

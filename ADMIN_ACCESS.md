@@ -97,3 +97,15 @@ Na atualização, publique frontend e backend compatíveis, atualize os caches d
 A alteração exige migração antes de usar o painel. Planeje a atribuição dos perfis para evitar interrupção prolongada dos operadores. As migrações novas foram executadas em SQLite em memória nos testes; não foram aplicadas ao banco configurado neste checkout, que usa MySQL sem o driver PDO correspondente instalado neste ambiente.
 
 A migração `2026_10_14_000013` adiciona a associação de várias queixas a cada produto, liga nomes legados já cadastrados e preserva textos não cadastrados. Não faça rollback dessa tabela depois de cadastrar múltiplas queixas sem exportar os vínculos: o campo legado guarda somente um alvo para compatibilidade.
+
+## Revisão da interface administrativa — 31/10/2026
+
+O painel identifica a marca Pruma Essential e o perfil da conta, oferece atalhos para as áreas permitidas e mantém catálogo, categorias e queixas em módulos separados. Métricas exigem `health.view` e o assistente exige `insights.generate` também na interface; os Gates do backend permanecem a autoridade.
+
+A identidade é revalidada a cada minuto enquanto a página está visível e ao retornar à aba/janela. Respostas 401/419 ou 403 com `code=ADMIN_REAUTH_REQUIRED`/`ADMIN_ACCESS_CHANGED` removem o conteúdo administrativo e desmontam formulários abertos, exigindo novo login. Uma recusa comum de operação (403 sem esses códigos) ou indisponibilidade temporária não encerra a sessão. A verificação inicial oferece nova tentativa sem recarregar a página. Respostas atrasadas de identidade não restauram o painel após logout ou novo fluxo de entrada.
+
+O logout bloqueia envios duplicados e informa quando não foi possível confirmar o encerramento no servidor. Essas medidas de interface não substituem a expiração e a revogação de sessão no backend, nem removem dados já vistos pelo operador.
+
+O diálogo de autenticação tem rótulos associados, foco contido, retorno ao botão de origem e rolagem interna em telas pequenas. Escape fecha quando não há envio em andamento nem códigos de recuperação aguardando confirmação. MFA expirado permite **Recomeçar acesso** com email preservado e senha/códigos limpos; senha e chave de configuração deixam de ser necessárias na interface após a etapa correspondente. Não há cadastro público de administradores.
+
+A verificação de navegador `testes/browser/browser-admin-access.mjs` usa o build real com API inteiramente simulada, sem chamadas externas. Ela não comprova autenticação Laravel, entrega de emails, validade criptográfica do MFA ou execução no MySQL. Execute também os testes PHP e a integração real isolada antes da homologação.

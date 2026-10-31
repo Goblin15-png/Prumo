@@ -1,8 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import api, { ensureCsrfCookie, adminApi, ensureAdminCsrfCookie } from '../services/api';
 import { Sparkles, Lock, Mail, User, Eye, EyeOff } from 'lucide-react';
 
 export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, onRegisterSuccess, onResetComplete, administrative = false }) {
+  const dialogRef = useRef(null);
+  const attemptVersion = useRef(0);
+  const [challengeExpired, setChallengeExpired] = useState(false);
   const authApi = administrative ? adminApi : api;
   const authCsrf = administrative ? ensureAdminCsrfCookie : ensureCsrfCookie;
   const [isLoginMode, setIsLoginMode] = useState(true);
@@ -37,6 +40,11 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
 
   useEffect(() => {
     if (!isOpen) return;
+    setChallengeExpired(false);
+    setLoading(false);
+    setShowPassword(false);
+    setShowPasswordConfirmation(false);
+    setPasswordConfirmation('');
     setIsLoginMode(true);
     setIsForgotMode(false);
     setErrorMessage(null);
@@ -50,7 +58,59 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
     setFormData((current) => ({ ...current, password: '' }));
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousFocus = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    dialogRef.current?.focus();
+    return () => {
+      attemptVersion.current += 1;
+      document.body.style.overflow = previousOverflow;
+      if (previousFocus?.isConnected) previousFocus.focus();
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || loading) return;
+    if (recoveryCodes.length > 0) dialogRef.current?.focus();
+    else if (twoFactorMode) dialogRef.current?.querySelector('[autocomplete="one-time-code"]')?.focus();
+    else dialogRef.current?.querySelector(isResetMode ? '#auth-password' : '#auth-email')?.focus();
+  }, [isOpen, loading, twoFactorMode, isForgotMode, isResetMode, recoveryCodes.length]);
+
   if (!isOpen) return null;
+
+  const restartLogin = () => {
+    attemptVersion.current += 1;
+    setTwoFactorMode(null);
+    setTwoFactorCode('');
+    setTwoFactorSecret('');
+    setTwoFactorUri('');
+    setAuthenticatedUser(null);
+    setRecoveryCodes([]);
+    setChallengeExpired(false);
+    setErrorMessage(null);
+    setNoticeMessage('Entre com email e senha para iniciar uma nova autenticação.');
+    setFormData((current) => ({ ...current, password: '' }));
+  };
+
+  const handleDialogKeyDown = (event) => {
+    if (event.key === 'Escape' && !loading && recoveryCodes.length === 0) {
+      event.preventDefault();
+      onClose();
+    }
+    if (event.key !== 'Tab') return;
+    const focusable = [...dialogRef.current.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select, textarea, summary, [tabindex="0"]')]
+      .filter((element) => element.getClientRects().length > 0);
+    const first = focusable[0];
+    const last = focusable.at(-1);
+    if (!first) { event.preventDefault(); return; }
+    if (event.shiftKey && (document.activeElement === first || document.activeElement === dialogRef.current)) {
+      event.preventDefault(); last.focus();
+    } else if (!event.shiftKey && (document.activeElement === last || document.activeElement === dialogRef.current)) {
+      event.preventDefault(); first.focus();
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -60,6 +120,9 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading || challengeExpired) return;
+    const attempt = ++attemptVersion.current;
+    const isCurrent = () => attempt === attemptVersion.current;
     if (!isLoginMode && !isForgotMode && !twoFactorMode && formData.password !== passwordConfirmation) {
       setErrorMessage('As senhas não conferem. Verifique e tente novamente.');
       return;
@@ -71,8 +134,13 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
     try {
       if (twoFactorMode === 'setup') {
         await authCsrf();
+        if (!isCurrent()) return;
         const res = await authApi.post('/admin/auth/two-factor/confirm-setup', { code: twoFactorCode });
+        if (!isCurrent()) return;
         setAuthenticatedUser(res.data.user);
+        setTwoFactorSecret('');
+        setTwoFactorUri('');
+        setTwoFactorCode('');
         setRecoveryCodes(res.data.recovery_codes || []);
         setTwoFactorMode(null);
         return;
@@ -80,7 +148,9 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
 
       if (twoFactorMode === 'verify') {
         await authCsrf();
+        if (!isCurrent()) return;
         const res = await authApi.post('/admin/auth/two-factor/verify', { code: twoFactorCode });
+        if (!isCurrent()) return;
         if (onAuthSuccess) onAuthSuccess(res.data.user);
         onClose();
         return;
@@ -88,19 +158,23 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
 
       if (isForgotMode) {
         await ensureCsrfCookie();
+        if (!isCurrent()) return;
         await api.post('/password/forgot', { email: formData.email });
+        if (!isCurrent()) return;
         setNoticeMessage('Se o endereço puder receber recuperação, enviaremos as instruções.');
         return;
       }
 
       if (isResetMode) {
         await ensureCsrfCookie();
+        if (!isCurrent()) return;
         await api.post('/password/reset', {
           token: resetToken,
           email: formData.email || resetEmail,
           password: formData.password,
           password_confirmation: passwordConfirmation,
         });
+        if (!isCurrent()) return;
         setNoticeMessage('Senha redefinida. Entre com a nova senha.');
         setIsResetMode(false);
         setIsLoginMode(true);
@@ -112,11 +186,13 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
       if (isLoginMode) {
         // Fluxo de Login
         await authCsrf();
+        if (!isCurrent()) return;
         const res = await authApi.post(administrative ? '/admin/auth/login' : '/login', {
           email: formData.email,
           password: formData.password,
         });
 
+        if (!isCurrent()) return;
         if (res.data.requires_password_reset) {
           setIsForgotMode(true);
           setNoticeMessage('Esta conta administrativa precisa redefinir a senha. Solicite o link de recuperação enviado ao email cadastrado.');
@@ -124,6 +200,7 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
         }
 
         if (res.data.requires_two_factor_setup || res.data.requires_two_factor) {
+          setFormData((current) => ({ ...current, password: '' }));
           setTwoFactorMode(res.data.requires_two_factor_setup ? 'setup' : 'verify');
           setTwoFactorSecret(res.data.secret || '');
           setTwoFactorUri(res.data.otpauth_url || '');
@@ -132,11 +209,13 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
           return;
         }
 
+        if (!isCurrent()) return;
         if (onAuthSuccess) onAuthSuccess(res.data.user);
         onClose();
       } else {
         // O questionário opcional é oferecido logo após a criação da conta.
         await ensureCsrfCookie();
+        if (!isCurrent()) return;
         const res = await api.post('/register', {
           name: formData.name,
           email: formData.email,
@@ -144,6 +223,7 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
           password_confirmation: passwordConfirmation,
         });
 
+        if (!isCurrent()) return;
         if (onRegisterSuccess) {
           onRegisterSuccess(res.data.user);
         } else {
@@ -152,23 +232,30 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
         }
       }
     } catch (err) {
-      const msg = err.response?.data?.message || 'Falha na comunicação com o servidor botânico.';
+      if (!isCurrent()) return;
+      const status = err.response?.status;
+      if (twoFactorMode && [401, 419].includes(status)) setChallengeExpired(true);
+      const msg = status === 429
+        ? 'Muitas tentativas. Aguarde alguns instantes antes de tentar novamente.'
+        : status === 419
+        ? 'Sua sessão expirou. Recomece o acesso para continuar.'
+        : err.response?.data?.message || 'Não foi possível comunicar com o servidor. Confira sua conexão e tente novamente.';
       setErrorMessage(msg);
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-canvas text-ink rounded-3xl shadow-2xl max-w-lg w-full p-6 sm:p-8 border border-success-ink/10 my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="auth-dialog-title" tabIndex={-1} onKeyDown={handleDialogKeyDown} className="bg-canvas text-ink rounded-3xl shadow-2xl max-w-lg w-full max-h-[calc(100dvh-2rem)] overflow-y-auto p-6 sm:p-8 border border-success-ink/10">
         
         {/* Cabeçalho */}
         <div className="text-center mb-6">
           <span className="text-[10px] uppercase tracking-widest text-brand-ink font-bold bg-brand-ink/10 px-3 py-1 rounded-full">
             {isForgotMode ? 'Recuperação de senha' : isResetMode ? 'Nova senha' : administrative ? 'Acesso administrativo' : isLoginMode ? 'Acessar Conta' : 'Cadastro de cliente'}
           </span>
-          <h2 className="text-2xl font-serif text-brand-ink mt-3 font-bold">
+          <h2 id="auth-dialog-title" className="text-2xl font-serif text-brand-ink mt-3 font-bold">
             {isForgotMode ? 'Recupere seu acesso' : isResetMode ? 'Defina uma nova senha' : administrative ? 'Entrar no painel' : isLoginMode ? 'Bem-vindo de Volta' : 'Crie sua conta'}
           </h2>
           <p className="text-xs text-ink-muted mt-1 max-w-sm mx-auto">
@@ -186,7 +273,7 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
 
         {noticeMessage && <div role="status" className="mb-4 rounded-xl border border-success-line bg-success-soft p-3 text-xs text-success-ink">{noticeMessage}</div>}
         {errorMessage && (
-          <div className="mb-4 p-3 rounded-xl bg-danger-soft text-danger-ink text-xs border border-danger-line">
+          <div role="alert" className="mb-4 p-3 rounded-xl bg-danger-soft text-danger-ink text-xs border border-danger-line">
             {errorMessage}
           </div>
         )}
@@ -209,11 +296,13 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
           {/* Campos Básicos de Conta */}
           {!isLoginMode && !isForgotMode && !isResetMode && (
             <div>
-              <label className="block text-xs font-semibold text-ink-secondary mb-1">
+              <label htmlFor="auth-name" className="block text-xs font-semibold text-ink-secondary mb-1">
                 Nome Completo *
               </label>
               <div className="relative">
                 <input
+                  id="auth-name"
+                  autoComplete="name"
                   type="text"
                   name="name"
                   required
@@ -228,11 +317,13 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
           )}
 
           <div hidden={!!twoFactorMode}>
-            <label className="block text-xs font-semibold text-ink-secondary mb-1">
+            <label htmlFor="auth-email" className="block text-xs font-semibold text-ink-secondary mb-1">
               Email *
             </label>
             <div className="relative">
               <input
+                id="auth-email"
+                autoComplete="username"
                 type="email"
                 name="email"
                 required={!twoFactorMode}
@@ -247,11 +338,12 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
 
           {!isForgotMode && (
           <div hidden={!!twoFactorMode}>
-            <label className="block text-xs font-semibold text-ink-secondary mb-1">
+            <label htmlFor="auth-password" className="block text-xs font-semibold text-ink-secondary mb-1">
               {isResetMode ? 'Nova senha *' : 'Senha *'}
             </label>
             <div className="relative">
               <input
+                id="auth-password"
                 type={showPassword ? 'text' : 'password'}
                 name="password"
                 required={!twoFactorMode}
@@ -278,9 +370,10 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
 
           {(isResetMode || (!isLoginMode && !isForgotMode)) && (
             <div>
-              <label className="mb-1 block text-xs font-semibold text-ink-secondary">{isResetMode ? 'Confirme a nova senha *' : 'Confirme a senha *'}</label>
+              <label htmlFor="auth-password-confirmation" className="mb-1 block text-xs font-semibold text-ink-secondary">{isResetMode ? 'Confirme a nova senha *' : 'Confirme a senha *'}</label>
               <div className="relative">
                 <input
+                  id="auth-password-confirmation"
                   type={showPasswordConfirmation ? 'text' : 'password'}
                   required={!twoFactorMode}
                   minLength={12}
@@ -312,7 +405,8 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
                   <details className="text-[11px] text-ink-muted"><summary className="cursor-pointer font-semibold">Ver endereço otpauth</summary><code className="mt-2 block break-all rounded-lg bg-surface p-2">{twoFactorUri}</code></details>
                 </>
               ) : <><p className="text-xs font-semibold text-ink">Digite o código do aplicativo autenticador ou um código de recuperação.</p><p className="text-xs text-ink-muted">Abra a conta da loja no seu autenticador. O código de 6 dígitos muda a cada 30 segundos.</p></>}
-              <input type="text" required inputMode={twoFactorMode === 'setup' ? 'numeric' : 'text'} autoComplete="one-time-code" maxLength={32} value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value.trim())} placeholder={twoFactorMode === 'setup' ? '000000' : 'Código de autenticação'} className="w-full rounded-xl border border-line-strong bg-surface px-3 py-2 text-center font-mono text-sm tracking-widest outline-none focus:ring-2 focus:ring-brand-ink" />
+              <label htmlFor="auth-mfa-code" className="block text-xs font-semibold text-ink-secondary">Código de autenticação</label>
+              <input id="auth-mfa-code" disabled={loading || challengeExpired} type="text" required inputMode={twoFactorMode === 'setup' ? 'numeric' : 'text'} autoComplete="one-time-code" maxLength={32} value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value.trim())} placeholder={twoFactorMode === 'setup' ? '000000' : 'Código de autenticação'} className="w-full rounded-xl border border-line-strong bg-surface px-3 py-2 text-center font-mono text-sm tracking-widest outline-none focus:ring-2 focus:ring-brand-ink" />
             </div>
           )}
 
@@ -320,7 +414,7 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
           <div className="pt-4 flex flex-col gap-2.5">
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || challengeExpired}
               className="w-full bg-[#5E1A2B] hover:bg-[#4A1422] text-white py-2.5 rounded-xl font-semibold text-xs tracking-wider uppercase transition shadow-md disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <Sparkles className="w-4 h-4" />
@@ -362,8 +456,11 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
               </button>
             )}
 
+            {twoFactorMode && <button type="button" disabled={loading} onClick={restartLogin} className="rounded-xl border border-line-strong px-3 py-2 text-xs text-brand-ink disabled:opacity-50">Recomeçar acesso</button>}
+
             <button
               type="button"
+              disabled={loading}
               onClick={onClose}
               className="text-xs text-ink-faint hover:text-ink-secondary text-center transition"
             >

@@ -69,6 +69,27 @@ class AdminPermissionsTest extends TestCase
         $this->assertFalse(Gate::forUser($admin)->allows('system.view'));
     }
 
+    public function test_expired_mfa_returns_a_reauthentication_code_and_still_allows_logout(): void
+    {
+        $this->admin('owner');
+        $this->withAdminSession(['admin_mfa_confirmed_at' => now()->subHours(9)->getTimestamp()]);
+        $this->getJson('/api/v1/admin/categories')->assertForbidden()->assertJsonPath('code', 'ADMIN_REAUTH_REQUIRED');
+        $this->getJson('/api/v1/admin/auth/me')->assertForbidden()->assertJsonPath('code', 'ADMIN_REAUTH_REQUIRED');
+        $this->postJson('/api/v1/admin/auth/logout')->assertOk();
+    }
+
+    public function test_changed_access_version_is_distinguishable_from_an_operation_gate_denial(): void
+    {
+        $admin = $this->admin('technical');
+        $denied = $this->getJson('/api/v1/admin/orders')->assertForbidden();
+        $this->assertNull($denied->json('code'));
+        $this->getJson('/api/v1/admin/auth/me')->assertOk();
+
+        $admin->forceFill(['admin_access_version' => 1])->save();
+        $this->getJson('/api/v1/admin/auth/me')->assertForbidden()->assertJsonPath('code', 'ADMIN_ACCESS_CHANGED');
+        $this->getJson('/api/v1/admin/system-status')->assertForbidden()->assertJsonPath('code', 'ADMIN_ACCESS_CHANGED');
+    }
+
     public function test_legacy_unknown_and_changed_profiles_are_denied(): void
     {
         $admin = $this->admin(null);
