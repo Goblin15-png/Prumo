@@ -1,7 +1,11 @@
-# AGENTS.md — Protocolo Cuidar | E-commerce
+# AGENTS.md — Pruma Essential | E-commerce
 
 > Instruções de projeto para Codex e outros agentes de programação. Leia antes de qualquer alteração.
 > Fonte consolidada: decisões dos chats do projeto e estrutura do ZIP analisado. Quando houver divergência entre documentação e código, investigar e comunicar antes de modificar.
+
+## Decisão atual — 31/10/2026
+
+Por solicitação explícita do responsável, a identidade pública passa a ser **Pruma Essential** e a configuração alvo do Laravel passa a ser **MySQL** (ver `MYSQL.md`). Isso substitui as referências anteriores a Protocolo Cuidar/Prumo Essências e à escolha de PostgreSQL. Preservar painel `/admin`, autenticação, MFA, permissões e testes/prévia com SQLite. Nenhuma infraestrutura ou migração de dados foi executada.
 
 ## 1. Missão e princípios
 
@@ -18,7 +22,7 @@ Construir e evoluir um e-commerce de **blends**, com experiência de compra clar
 
 - **Frontend:** React 18, Vite 6, Tailwind CSS 4, Axios.
 - **Backend:** PHP 8.2+, Laravel 12, Laravel Sanctum, MFA TOTP (`pragmarx/google2fa`).
-- **Hospedagem/banco escolhidos em 19/10/2026:** frontend na Vercel, Laravel em hospedagem PHP e PostgreSQL gerenciado, restrito ao backend. Provedores do Laravel/PostgreSQL, domínios e rede ainda pendentes. Prévia/testes continuam com SQLite isolado; a decisão não significa que a infraestrutura já esteja criada ou homologada. Consulte `DEPLOYMENT.md` e `POSTGRESQL.md`.
+- **Hospedagem/banco atualizados em 31/10/2026:** frontend na Vercel, Laravel em hospedagem PHP e MySQL, restrito ao backend. Provedores do Laravel/MySQL, domínios e rede ainda pendentes. Prévia/testes continuam com SQLite isolado; a decisão não significa que a infraestrutura já esteja criada ou homologada. Consulte `DEPLOYMENT.md` e `MYSQL.md`.
 - **Node.js:** utilizado no ecossistema/frontend; **não presumir um servidor Node independente** sem confirmar sua existência e responsabilidade no repositório. Se serviços Node forem necessários, discutir contratos antes de criá-los.
 - **Integrações planejadas/atuais:** Mercado Pago para pagamentos e Melhor Envio para frete.
 - **Estrutura observada no ZIP:** `frontend/`, `backend/`, `SECURITY.md`, `DEPLOYMENT.md` e `AGENTS.md`.
@@ -58,7 +62,7 @@ Os chats são usados para evitar misturar assuntos. Antes de mudanças transvers
 | **Site / frontend** | React, UX, páginas, catálogo, carrinho, painel visual, dados fictícios, testes de interface e backend estritamente necessário às telas. |
 | **Pagamentos, frete e checkout** | Mercado Pago, checkout transparente, Melhor Envio, cálculo de frete, pedidos, webhooks, idempotência e conciliação. |
 | **Segurança / administração** | Login, MFA, sessão, RBAC, proteção de APIs, auditoria, segurança do painel e revisão de vulnerabilidades. |
-| **Infraestrutura / hospedagem** | Frontend Vercel + Laravel em hospedagem PHP + PostgreSQL gerenciado definidos. Escolha dos provedores restantes, domínios, redes, deploy, ambientes e operação ficam na trilha de infraestrutura. |
+| **Infraestrutura / hospedagem** | Frontend Vercel + Laravel em hospedagem PHP + MySQL definidos. Escolha dos provedores restantes, domínios, redes, deploy, ambientes e operação ficam na trilha de infraestrutura. |
 
 **Regra:** um chat pode identificar dependência de outra área, mas não deve redesenhar unilateralmente os contratos ou implementar grandes alterações fora do seu escopo.
 

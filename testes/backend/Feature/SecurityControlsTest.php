@@ -416,7 +416,7 @@ class SecurityControlsTest extends TestCase
             'services.melhor_envio.token' => 'test-shipping-token',
             'services.melhor_envio.origin_cep' => '66000-000',
             'services.melhor_envio.environment' => 'sandbox',
-            'services.melhor_envio.user_agent' => 'Protocolo Cuidar (dev@example.test)',
+            'services.melhor_envio.user_agent' => 'Pruma Essential (dev@example.test)',
             'services.mercado_pago.access_token' => 'test-mp-token',
             'services.mercado_pago.webhook_secret' => 'test-webhook-secret',
             'services.mercado_pago.environment' => 'sandbox',
@@ -494,7 +494,7 @@ class SecurityControlsTest extends TestCase
             'services.melhor_envio.token' => 'test-shipping-token',
             'services.melhor_envio.origin_cep' => '66000-000',
             'services.melhor_envio.environment' => 'sandbox',
-            'services.melhor_envio.user_agent' => 'Protocolo Cuidar (dev@example.test)',
+            'services.melhor_envio.user_agent' => 'Pruma Essential (dev@example.test)',
             'services.mercado_pago.access_token' => 'test-mp-token',
             'services.mercado_pago.webhook_secret' => 'test-webhook-secret',
             'services.mercado_pago.environment' => 'sandbox',
@@ -673,7 +673,7 @@ class SecurityControlsTest extends TestCase
             'services.melhor_envio.token' => 'test-token',
             'services.melhor_envio.origin_cep' => '66000-000',
             'services.melhor_envio.environment' => 'sandbox',
-            'services.melhor_envio.user_agent' => 'Protocolo Cuidar (dev@example.test)',
+            'services.melhor_envio.user_agent' => 'Pruma Essential (dev@example.test)',
         ]);
         Http::fake([
             'https://sandbox.melhorenvio.com.br/api/v2/me/shipment/calculate' => Http::response([[

@@ -323,7 +323,7 @@ class CheckoutService
             'items' => $items,
             'payer' => ['email' => $user->email, 'name' => mb_substr($user->name, 0, 100)],
             'external_reference' => $order->order_number,
-            'statement_descriptor' => 'PROTOCOLO CUIDAR',
+            'statement_descriptor' => 'PRUMA ESSENTIAL',
             'expires' => true,
             'expiration_date_from' => now()->subMinute()->toIso8601String(),
             'expiration_date_to' => $expiresAt->toIso8601String(),

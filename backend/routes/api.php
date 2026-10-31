@@ -25,7 +25,7 @@ use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes - Protocolo Cuidar (Full-Stack E-commerce)
+| API Routes - Pruma Essential (Full-Stack E-commerce)
 |--------------------------------------------------------------------------
 */
 

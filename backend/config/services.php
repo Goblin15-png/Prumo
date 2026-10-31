@@ -22,7 +22,7 @@ return [
         'token' => env('MELHOR_ENVIO_TOKEN'),
         'origin_cep' => env('STORE_ORIGIN_CEP'),
         'environment' => env('MELHOR_ENVIO_ENVIRONMENT', 'sandbox'),
-        'user_agent' => env('MELHOR_ENVIO_USER_AGENT', 'Protocolo Cuidar (suporte@seudominio.com.br)'),
+        'user_agent' => env('MELHOR_ENVIO_USER_AGENT', 'Pruma Essential (suporte@seudominio.com.br)'),
     ],
 
     'mercado_pago' => [

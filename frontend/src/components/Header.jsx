@@ -15,7 +15,7 @@ export default function Header({ cartCount, onOpenOnboarding, userProfile }) {
             </div>
             <div className="flex flex-col">
               <span className="font-serif tracking-widest text-lg sm:text-xl font-medium uppercase text-white leading-tight">
-                PROTOCOLO CUIDAR
+                PRUMA ESSENTIAL
               </span>
               <span className="text-[9px] tracking-[0.25em] text-amber-100/70 font-sans uppercase">
                 APOTHECARY & RITUAL

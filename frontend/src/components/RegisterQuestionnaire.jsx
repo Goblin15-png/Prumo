@@ -335,7 +335,7 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
                 : isForgotMode
                 ? 'Enviar instruções'
                 : isLoginMode
-                ? administrative ? 'Entrar no painel' : 'Entrar no Protocolo Cuidar'
+                ? administrative ? 'Entrar no painel' : 'Entrar no Pruma Essential'
                 : 'Criar conta'}
             </button>
 
