@@ -72,3 +72,7 @@ PLAYWRIGHT_MODULE=/caminho/playwright/index.mjs node testes/browser/browser-admi
 ```
 
 O teste inicia seu próprio servidor estático local e intercepta todas as APIs com dados fictícios. Cobre login móvel e teclado, configuração MFA e códigos de recuperação, reinício de desafio expirado, limpeza do painel/formulário após 401/419 ou revogação explícita, distinção de 403 por operação e erro temporário, repetição da verificação inicial, perfil técnico, permissões de métricas/IA, logout sem duplicação, resposta de identidade atrasada, limite de tentativas e solicitação de recuperação de senha. Não valida a criptografia MFA, SMTP nem o backend real. `AdminPermissionsTest` verifica os códigos de reautenticação no Laravel e preserva a distinção em relação aos Gates por operação.
+
+### Recuperação de checkout e frete
+
+`browser/browser-checkout.mjs` contém doze cenários com o build real e API/SDK simulados. Além dos cenários anteriores, verifica repetição de cotação indisponível, invalidação do frete recusado antes de uma nova seleção, retomada de pagamento com sacola vazia após recarga, consulta de pedido já enviado e pago, isolamento de UUID por cliente e funcionamento em memória com `sessionStorage` bloqueado. Retomar/consultar não pode emitir um novo POST de cobrança. Nenhuma requisição financeira ou logística é enviada aos provedores. O teste não homologa Mercado Pago, Melhor Envio, MySQL ou o backend Laravel real.

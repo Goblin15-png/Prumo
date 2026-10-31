@@ -43,3 +43,7 @@ Para produção, a configuração precisa usar `production` e o token da conta d
 A integração disponível calcula preço/prazo e registra o frete escolhido no pedido. Compra, geração e impressão de etiquetas, coleta e sincronização de rastreio **ainda não estão implementadas**. O painel da loja permite informar o rastreio manualmente. A API de Busca CEP dos Correios é outra integração: `CORREIOS_ACCESS_TOKEN` não serve para o Melhor Envio, e `MELHOR_ENVIO_TOKEN` não autoriza a consulta de endereço dos Correios.
 
 Os testes do repositório usam respostas HTTP simuladas; eles não comprovam que a conta, o token ou a operação de postagem estejam ativos. Nenhum frete ou etiqueta foi contratado nesta implementação.
+
+## Tratamento de falhas na tela
+
+A revisão de 31/10/2026 limita a espera da cotação no navegador a 15 segundos, permite repetir uma consulta indisponível e impede duplicação enquanto ela está em andamento. Se a validação de checkout informar mudança de frete em `shipping_option_id`, as opções antigas são descartadas e o cliente precisa recalcular e selecionar a entrega novamente. Isso preserva o recálculo obrigatório do servidor; não garante preço ou prazo antes da nova cotação. O retorno de sandbox/produção não foi consultado nesta revisão: os cenários novos de interface usam API simulada.

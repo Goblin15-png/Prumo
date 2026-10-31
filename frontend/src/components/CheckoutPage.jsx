@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import api, { ensureCsrfCookie } from '../services/api';
 import CardPaymentForm from './CardPaymentForm';
+import { checkoutStorageKey, readCheckoutAttempt } from '../services/checkoutAttemptStorage';
 import { orderCurrency } from './orderPresentation';
 
 const emptyAddress = { recipient_name: '', phone: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '' };
@@ -33,10 +34,12 @@ export default function CheckoutPage({ cart, user, onOpenAuth, onRequireVerifica
   const [recovery, setRecovery] = useState(null);
   const attempt = useRef(null);
   const submitting = useRef(false);
+  const shippingInFlight = useRef(false);
   const paid = useRef(null);
   const paidCallback = useRef(onPaid);
   paidCallback.current = onPaid;
-  const storageKey = user ? `protocolo-checkout:${user.id}` : null;
+  const storageKey = checkoutStorageKey(user?.id);
+  const paymentConfirmed = result?.status === 'paid' || (result?.status === 'shipped' && result?.payment_status === 'approved');
   const pickup = fulfillment === 'pickup';
   const subtotal = cart.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0);
   const shipping = pickup ? 0 : Number(selectedQuote?.price || 0);
@@ -46,23 +49,21 @@ export default function CheckoutPage({ cart, user, onOpenAuth, onRequireVerifica
 
   const loadConfig = () => {
     setConfigError('');
-    api.get('/runtime-config').then(({ data }) => setConfig(data)).catch(() => setConfigError('Não foi possível carregar as opções de pagamento.'));
+    api.get('/runtime-config', { timeout: 10000 }).then(({ data }) => setConfig(data)).catch(() => setConfigError('Não foi possível carregar as opções de pagamento.'));
   };
   useEffect(loadConfig, []);
   useEffect(() => {
     setResult(null); setRecovery(null); attempt.current = null; paid.current = null;
     if (!storageKey) return;
-    try {
-      const key = sessionStorage.getItem(storageKey);
-      if (key && /^[a-f0-9-]{36}$/i.test(key)) setRecovery(key);
-    } catch { /* Checkout works without browser storage. */ }
+    const key = readCheckoutAttempt(user.id);
+    if (key) setRecovery(key);
   }, [storageKey]);
   useEffect(() => {
-    if (result?.status === 'paid' && paid.current !== result.order_number) {
+    if (paymentConfirmed && paid.current !== result.order_number) {
       paid.current = result.order_number;
       paidCallback.current?.();
     }
-  }, [result]);
+  }, [result, paymentConfirmed]);
 
   useEffect(() => {
     const request = ++lookupRequest.current;
@@ -120,14 +121,16 @@ export default function CheckoutPage({ cart, user, onOpenAuth, onRequireVerifica
 
   const calculateShipping = async (event) => {
     event.preventDefault();
-    if (locked) return;
+    if (locked || shippingInFlight.current) return;
+    shippingInFlight.current = true;
     setBusy(true); setError(''); setQuotes([]); setSelectedQuote(null);
     try {
-      const { data } = await api.post('/shipping/calculate', { postal_code: postalCode, items: cart.map((item) => ({ product_id: item.id, quantity: item.quantity })) });
+      const { data } = await api.post('/shipping/calculate', { postal_code: postalCode, items: cart.map((item) => ({ product_id: item.id, quantity: item.quantity })) }, { timeout: 15000 });
       setQuotes(data.data || []);
       if (!data.data?.length) setError('Não há opções de entrega para este CEP e carrinho.');
-    } catch (err) { setError(failure(err)); }
-    finally { setBusy(false); }
+    } catch (err) {
+      setError(Object.values(err.response?.data?.errors || {}).flat()[0] || err.response?.data?.message || 'Não foi possível calcular o frete. Confira sua conexão e tente novamente.');
+    } finally { shippingInFlight.current = false; setBusy(false); }
   };
   const submit = async (payment) => {
     if (submitting.current) return;
@@ -153,12 +156,16 @@ export default function CheckoutPage({ cart, user, onOpenAuth, onRequireVerifica
       // Validation/auth failures occur before a payment is submitted and can be corrected safely.
       if ([401, 403, 419, 422].includes(err.response?.status)) {
         attempt.current = null;
+        if (err.response.status === 422 && err.response.data?.errors?.shipping_option_id) {
+          setSelectedQuote(null);
+          setQuotes([]);
+        }
         try { sessionStorage.removeItem(storageKey); } catch { /* no storage */ }
       }
     } finally { submitting.current = false; setBusy(false); }
   };
   const reset = () => {
-    if (result?.status !== 'cancelled' && result?.status !== 'paid') return;
+    if (result?.status !== 'cancelled' && !paymentConfirmed) return;
     attempt.current = null; setRecovery(null); setResult(null); setError('');
     try { sessionStorage.removeItem(storageKey); } catch { /* no storage */ }
   };
@@ -174,7 +181,7 @@ export default function CheckoutPage({ cart, user, onOpenAuth, onRequireVerifica
     {!config && !configError && <p role="status">Carregando checkout…</p>}
     {error && <p role="alert" className="rounded-xl border border-danger-line bg-danger-soft p-4 text-sm text-danger-ink">{error}</p>}
     {(result || recovery) ? <section className="space-y-4 rounded-2xl border border-line bg-surface p-6" aria-label="Resultado do pagamento">
-      <h2 className="text-xl font-semibold">{result?.status === 'paid' ? 'Pagamento confirmado' : result?.status === 'cancelled' ? 'Pagamento não concluído' : 'Aguardando confirmação do pagamento'}</h2>
+      <h2 className="text-xl font-semibold">{paymentConfirmed ? 'Pagamento confirmado' : result?.status === 'cancelled' ? 'Pagamento não concluído' : 'Aguardando confirmação do pagamento'}</h2>
       {result?.order_number && <p>Pedido <strong>{result.order_number}</strong> · {orderCurrency(result.total_price)}</p>}
       {result?.test_mode && <p className="text-warning-ink">Resultado de teste local, sem cobrança real.</p>}
       {result?.status === 'pending' && result.pix_qr_code && <div className="space-y-3">
@@ -184,7 +191,7 @@ export default function CheckoutPage({ cart, user, onOpenAuth, onRequireVerifica
       </div>}
       {(!result || result.status === 'pending') && <><p className="text-sm">Consulte este pedido antes de tentar uma nova compra para evitar pagamentos duplicados.</p><button disabled={busy} className={buttonClass} onClick={refresh}>{busy ? 'Consultando…' : 'Consultar pagamento'}</button></>}
       {result?.status === 'cancelled' && <button className={buttonClass} onClick={reset}>Revisar e tentar novamente</button>}
-      {result?.status === 'paid' && <button className={buttonClass} onClick={() => { reset(); onOrders(); }}>Ver meus pedidos</button>}
+      {paymentConfirmed && <button className={buttonClass} onClick={() => { reset(); onOrders(); }}>Ver meus pedidos</button>}
     </section> : !cart.length ? <p className="rounded-xl border border-line p-6">Sua sacola está vazia. Adicione um blend para continuar.</p> : <>
       <fieldset disabled={locked} className="space-y-3">
         <legend className="mb-2 font-semibold">Como você quer receber?</legend>
