@@ -12,6 +12,7 @@ import RecommendedSection from './components/RecommendedSection';
 import ProductCarousel from './components/ProductCarousel';
 import MetaPixelConsent from './components/MetaPixelConsent';
 import api, { ensureCsrfCookie } from './services/api';
+import { readCheckoutAttempt } from './services/checkoutAttemptStorage';
 
 const initialFullCatalog = [];
 const initialCategories = [];
@@ -23,6 +24,7 @@ export default function App() {
   const [cart, setCart] = useState([]);
   const [user, setUser] = useState(null);
   const [localTestMode, setLocalTestMode] = useState(false);
+  const [pendingCheckoutOwner, setPendingCheckoutOwner] = useState(null);
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogError, setCatalogError] = useState('');
   const [categoryError, setCategoryError] = useState('');
@@ -108,6 +110,10 @@ export default function App() {
       // Favoritos continuam disponíveis durante a sessão se o navegador bloquear o armazenamento local.
     }
   }, [favoriteIds]);
+
+  useEffect(() => {
+    setPendingCheckoutOwner(user && readCheckoutAttempt(user.id) ? user.id : null);
+  }, [user?.id, currentView]);
 
   const handleResendVerification = async () => {
     setEmailVerificationLoading(true);
@@ -233,6 +239,13 @@ export default function App() {
         onSearchQueryChange={setSearchQuery}
         onSearch={handleSearch}
       />
+
+      {user && pendingCheckoutOwner === user.id && currentView !== 'checkout' && (
+        <section aria-label="Consulta de compra salva" className="mx-auto mt-3 w-[min(96%,80rem)] space-y-2 rounded-xl border border-info-line bg-info-soft px-4 py-3 text-sm text-info-ink">
+          <p>Há uma tentativa de compra salva nesta aba. Consulte o resultado antes de iniciar outra compra.</p>
+          <button type="button" onClick={() => { setIsCartOpen(false); setCurrentView('checkout'); }} className="rounded-lg border border-current px-3 py-2 font-semibold">Retomar consulta do pagamento</button>
+        </section>
+      )}
 
       {localTestMode && (
         <div role="status" className="mx-auto mt-3 w-[min(96%,80rem)] rounded-xl border border-warning-line-strong bg-warning-soft px-4 py-3 text-sm text-warning-ink">

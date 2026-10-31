@@ -47,11 +47,18 @@ const assertPrivateAddress = async (page) => {
 let browser;
 try {
   browser = await chromium.launch({ headless: true });
-  for (const scenario of ['pix-delivery', 'card-pickup', 'retry', 'declined', 'postal-code-race', 'postal-code-unavailable']) {
+  for (const scenario of ['pix-delivery', 'card-pickup', 'retry', 'declined', 'postal-code-race', 'postal-code-unavailable', 'shipping-retry', 'shipping-changed', 'resume-empty-cart', 'resume-shipped', 'storage-isolation', 'storage-blocked']) {
     const context = await browser.newContext({ viewport: scenario === 'card-pickup' ? { width:390, height:844 } : { width:1440, height:1000 } });
+    if (scenario === 'storage-isolation') await context.addInitScript(() => {
+      sessionStorage.setItem('protocolo-checkout:99','11111111-1111-4111-8111-111111111111');
+      if (!sessionStorage.getItem('protocolo-checkout:1')) sessionStorage.setItem('protocolo-checkout:1','------------------------------------');
+    });
+    if (scenario === 'storage-blocked') await context.addInitScript(() => {
+      Object.defineProperty(window,'sessionStorage',{get(){throw new DOMException('Blocked','SecurityError');}});
+    });
     const page = await context.newPage();
     page.setDefaultTimeout(10000);
-    const errors = []; const writes = []; let posted = 0; let confirmed = false; let sdkUnmounts = 0;
+    const errors = []; const writes = []; let posted = 0; let confirmed = false; let shippingRequests = 0; let sdkUnmounts = 0;
     const postalRequests = [];
     const pendingLookups = Object.fromEntries(['11111111','22222222','33333333'].map((code) => [code,{started:deferred(),release:deferred(),settled:deferred()}]));
     page.on('pageerror', (error) => errors.push(error.message));
@@ -75,14 +82,20 @@ try {
         }
         const product = {id:1,name:'Blend de teste',price:50,stock:5,images:[],ingredients:[],symptoms:[],is_active:true};
         const result = {order_number:'PC-CHECKOUT-TEST',status:confirmed?'paid':'pending',payment_status:confirmed?'approved':'pending',total_price:scenario==='pix-delivery'?'62.90':'50.00',payment_method:scenario==='card-pickup'?'credit_card':'pix',pix_qr_code:'PIX-FICTICIO-SEM-VALOR',fulfillment_method:scenario==='card-pickup'?'pickup':'delivery'};
+        if (endpoint === '/shipping/calculate') {
+          shippingRequests++;
+          if (scenario === 'shipping-retry' && shippingRequests === 1) return route.fulfill({status:503,json:{message:'Cotação temporariamente indisponível.'}});
+          return route.fulfill({json:{data:[{id:1,name:'Entrega teste',company:'Transportadora fictícia',price:scenario === 'shipping-changed' && shippingRequests > 1 ? 15.90 : 12.90,delivery_time:3}]}});
+        }
         if (request.method() === 'POST' && endpoint === '/checkout/transparent') {
           writes.push(request.postDataJSON()); posted++;
+          if (scenario === 'shipping-changed' && posted === 1) return route.fulfill({status:422,json:{message:'O frete mudou.',errors:{shipping_option_id:['O valor ou a opção de frete mudou. Recalcule e escolha a entrega novamente.']}}});
           if (scenario === 'retry' && posted === 1) return route.fulfill({status:503,json:{message:'Timeout de teste. Consulte novamente.'}});
           if (scenario === 'declined') return route.fulfill({json:{...result,status:'cancelled',payment_status:'failed'}});
           if (scenario === 'card-pickup') confirmed = true;
           return route.fulfill({json:{...result,status:confirmed?'paid':'pending',payment_status:confirmed?'approved':'pending'}});
         }
-        if (endpoint.startsWith('/checkout/attempt/')) { confirmed = true; return route.fulfill({json:{...result,status:'paid',payment_status:'approved'}}); }
+        if (endpoint.startsWith('/checkout/attempt/')) { confirmed = true; return route.fulfill({json:{...result,status:scenario === 'resume-shipped' ? 'shipped' : 'paid',payment_status:'approved'}}); }
         const data = {
           '/products':{data:[product]},'/categories':[], '/me':{user:{id:1,name:'Cliente Teste',email:'buyer@example.invalid',role:'customer',email_verified_at:'2026-01-01'}},
           '/runtime-config':{local_test_mode:false,checkout:{enabled:true,public_key:'TEST-fixture',environment:'sandbox',pickup_enabled:true,pickup_instructions:'Local fictício de teste. Aguarde a confirmação de retirada.'}},
@@ -94,6 +107,11 @@ try {
     });
     await page.goto(base);
     await page.getByRole('button',{name:'Recusar rastreamento',exact:true}).click();
+    if (scenario === 'storage-isolation' || scenario === 'storage-blocked') {
+      await page.getByRole('heading',{name:'Blend de teste',exact:true}).first().waitFor();
+      await page.getByRole('button',{name:'Cliente',exact:true}).waitFor();
+      assert.equal(await page.getByRole('button',{name:'Retomar consulta do pagamento',exact:true}).count(),0,'Não deve recuperar chaves de outro cliente, inválidas ou indisponíveis.');
+    }
     await page.getByRole('heading',{name:'Blend de teste',exact:true}).first().click();
     await page.getByRole('button',{name:'Adicionar à Sacola',exact:true}).click();
     await page.getByRole('button',{name:'Continuar para o checkout',exact:true}).click();
@@ -168,11 +186,33 @@ try {
       await assertPrivateAddress(page);
       assert.deepEqual(postalRequests,['00000000']);
       await page.getByRole('button',{name:'Calcular frete',exact:true}).click();
+      if (scenario === 'shipping-retry') {
+        await page.getByRole('alert').filter({hasText:'Cotação temporariamente indisponível'}).waitFor();
+        assert.equal(await page.getByRole('radio',{name:/Entrega teste/}).count(),0);
+        await page.getByRole('button',{name:'Calcular frete',exact:true}).click();
+        assert.equal(shippingRequests,2);
+      }
       await page.getByRole('radio',{name:/Entrega teste/}).check();
       await page.getByLabel('CPF',{exact:true}).fill('12345678909');
       await page.screenshot({path:`${artifacts}/checkout-${scenario}.png`,fullPage:true});
       await page.getByRole('button',{name:'Gerar Pix',exact:true}).click();
-      if (scenario === 'retry') {
+      if (scenario === 'shipping-changed') {
+        await page.getByRole('alert').filter({hasText:'Recalcule'}).waitFor();
+        assert.equal(await page.getByRole('radio',{name:/Entrega teste/}).count(),0,'Frete recusado deve ser invalidado.');
+        assert.equal(await page.getByRole('button',{name:'Gerar Pix',exact:true}).count(),0);
+        await page.getByRole('button',{name:'Calcular frete',exact:true}).click();
+        await page.getByRole('radio',{name:/Entrega teste/}).check();
+        await page.getByRole('button',{name:'Gerar Pix',exact:true}).click();
+        await page.getByRole('heading',{name:'Aguardando confirmação do pagamento',exact:true}).waitFor();
+        assert.equal(writes[1].expected_shipping_price,'15.90');
+        assert.notEqual(writes[0].idempotency_key,writes[1].idempotency_key);
+        assert.deepEqual(writes[0].shipping_address,writes[1].shipping_address);
+      } else if (scenario === 'storage-blocked') {
+        await page.getByRole('heading',{name:'Aguardando confirmação do pagamento',exact:true}).waitFor();
+        await page.getByRole('button',{name:'Consultar pagamento',exact:true}).click();
+        await page.getByRole('heading',{name:'Pagamento confirmado',exact:true}).waitFor();
+        assert.equal(posted,1,'Consultar em memória não deve repetir cobrança.');
+      } else if (scenario === 'retry') {
         await page.getByRole('alert').filter({hasText:'Timeout de teste'}).waitFor();
         await page.getByRole('button',{name:'Consultar esta tentativa novamente',exact:true}).click();
         await page.getByRole('heading',{name:'Aguardando confirmação do pagamento',exact:true}).waitFor();
@@ -185,11 +225,23 @@ try {
         await page.getByRole('heading',{name:'Aguardando confirmação do pagamento',exact:true}).waitFor();
         assert.equal(await page.getByRole('textbox',{name:'Pix copia e cola'}).inputValue(),'PIX-FICTICIO-SEM-VALOR');
         await page.reload();
-        await page.getByRole('heading',{name:'Blend de teste',exact:true}).first().click();
-        await page.getByRole('button',{name:'Adicionar à Sacola',exact:true}).click();
-        await page.getByRole('button',{name:'Continuar para o checkout',exact:true}).click();
+        if (scenario.startsWith('resume-')) {
+          await page.getByRole('button',{name:'Retomar consulta do pagamento',exact:true}).click();
+          assert.equal(await page.getByRole('heading',{name:'Finalizar compra',exact:true}).isVisible(),true);
+          assert.equal(await page.getByRole('radio',{name:'Receber em casa',exact:true}).count(),0);
+        } else {
+          await page.getByRole('heading',{name:'Blend de teste',exact:true}).first().click();
+          await page.getByRole('button',{name:'Adicionar à Sacola',exact:true}).click();
+          await page.getByRole('button',{name:'Continuar para o checkout',exact:true}).click();
+        }
         await page.getByRole('heading',{name:'Pagamento confirmado',exact:true}).waitFor();
         assert.equal(posted,1,'Recarga não pode repetir a cobrança.');
+        if (scenario === 'resume-shipped') {
+          await page.getByRole('button',{name:'Ver meus pedidos',exact:true}).click();
+          await page.getByRole('heading',{name:'Meus pedidos',exact:true}).waitFor();
+          await page.getByRole('button',{name:'Retomar consulta do pagamento',exact:true}).waitFor({state:'detached'});
+          assert.equal(await page.evaluate(()=>sessionStorage.getItem('protocolo-checkout:1')),null);
+        }
       }
       assert.equal(writes[0].payment.token,undefined);
       assert.equal(writes[0].shipping_address.street,addressByPostalCode['00000000'].street);
@@ -198,7 +250,7 @@ try {
     }
     assert.equal(new URL(page.url()).origin,base);
     assert.deepEqual(errors,[]);
-    const stored = await page.evaluate(()=>Object.entries(sessionStorage));
+    const stored = await page.evaluate(()=>{try{return Object.entries(sessionStorage);}catch{return [];}});
     assert.equal(JSON.stringify(stored).includes('card-token'),false);
     console.log(`PASS ${scenario}: checkout na loja, sem cobrança externa ou erros JavaScript.`);
     await context.close();
