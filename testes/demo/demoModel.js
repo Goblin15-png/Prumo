@@ -1,7 +1,7 @@
 // Dados e funções de demonstração. Nenhum dado deste módulo deve ser usado como registro real.
-export const DEMO_VIEWS = ['inicio', 'favoritos', 'carrinho', 'checkout', 'conta', 'pedidos', 'admin'];
+export const DEMO_VIEWS = ['inicio', 'favoritos', 'carrinho', 'checkout', 'conta', 'pedidos', 'admin', 'distribuidores'];
 export const DEMO_SCENARIOS = ['normal', 'vazio', 'sem-estoque', 'pagamento-recusado', 'pago'];
-export const DEMO_PERSONAS = ['visitante', 'cliente', 'admin'];
+export const DEMO_PERSONAS = ['visitante', 'cliente', 'admin', 'distribuidor'];
 
 export const demoCategories = [
   { id: 11, name: 'Aromas florais', position: 1 },

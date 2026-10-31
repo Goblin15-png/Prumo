@@ -148,3 +148,7 @@ Se existir um laboratório/demo isolado, preservá-lo; não conectar acidentalme
 Uma tarefa só está concluída quando: (a) atende ao requisito; (b) não mistura categorias e queixas/alvos; (c) mantém separação demo/real; (d) aplica controles no backend; (e) tem testes pertinentes executados ou limitações explicitadas; e (f) não introduz segredos nem regressões conhecidas.
 
 **Importante:** este documento é uma consolidação de decisões e objetivos; não comprova que todos os recursos já estejam implementados.
+
+## 11. Prévia de distribuidores B2B
+
+A etapa de distribuidores da Pruma Essential possui laboratório visual isolado em `testes/demo/DemoDistributors.jsx`, com modelos/fixtures/testes próprios. Leia `DISTRIBUIDORES.md` antes de evoluir o módulo. Os estados de aprovação e solicitação são propostas, sem tabela de atacado, mínimo, pagamento, frete ou acesso real definidos. Não importar a prévia para o build público nem conectar suas ações a APIs reais. A senha é apenas ilustrativa e não é coletada. Implementar autenticação e regras no Laravel somente após definir contrato/decisões comerciais e validar a UX.

@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ClipboardList, CreditCard, Minus, Plus, ShieldCheck, Trash2, UserRound } from 'lucide-react';
 import DemoCatalog from './DemoCatalog';
 import DemoCheckout from './DemoCheckout';
+import DemoDistributors from './DemoDistributors';
+import { createDistributorsDemo } from './demoDistributorsModel';
 import DemoCategoryManager from './DemoCategoryManager';
 import DemoProductManager from './DemoProductManager';
 import AdminAudienceReport from '../../frontend/src/components/AdminAudienceReport';
@@ -18,7 +20,7 @@ import {
 
 const menuItems = [
   ['inicio', 'Início'], ['favoritos', 'Favoritos'], ['carrinho', 'Sacola'],
-  ['checkout', 'Checkout'], ['conta', 'Minha conta'], ['pedidos', 'Pedidos'], ['admin', 'Admin simulado'],
+  ['checkout', 'Checkout'], ['conta', 'Minha conta'], ['pedidos', 'Pedidos'], ['admin', 'Admin simulado'], ['distribuidores', 'Distribuidores B2B'],
 ];
 const scenarioNames = {
   normal: 'Loja com produtos', vazio: 'Catálogo vazio', 'sem-estoque': 'Sem estoque',
@@ -41,6 +43,7 @@ export default function DemoStudio({ standalone = false }) {
   const [route, setRoute] = useState(() => resolveDemoParams(window.location.search));
   const [products, setProducts] = useState(demoProducts);
   const [categories, setCategories] = useState(demoCategories);
+  const [distributors, setDistributors] = useState(createDistributorsDemo);
   const [cart, setCart] = useState(() => ['vazio', 'sem-estoque'].includes(route.scenario) ? [] : [{ ...demoProducts[0], quantity: 1 }]);
   const [orders, setOrders] = useState(() => ordersForDemoScenario(route.scenario));
   const ordersRef = useRef(orders);
@@ -102,7 +105,7 @@ export default function DemoStudio({ standalone = false }) {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <label className="block text-xs font-semibold text-ink-muted">Perfil simulado
             <select aria-label="Perfil simulado" className={`${fieldClass} mt-1`} value={persona} onChange={(e) => setParams({ persona: e.target.value })}>
-              <option value="visitante">Visitante (sem conta)</option><option value="cliente">Cliente fictício</option><option value="admin">Administrador fictício</option>
+              <option value="visitante">Visitante (sem conta)</option><option value="cliente">Cliente fictício</option><option value="admin">Administrador fictício</option><option value="distribuidor">Distribuidor fictício</option>
             </select>
           </label>
           <label className="block text-xs font-semibold text-ink-muted">Cenário
@@ -119,6 +122,8 @@ export default function DemoStudio({ standalone = false }) {
       </nav>
 
       {view === 'inicio' && <DemoCatalog products={visibleProducts} categories={categories} favorites={favorites} onToggleFavorite={toggleFavorite} onQuickView={setSelectedProduct} search={search} onSearchChange={setSearch} />}
+
+      {view === 'distribuidores' && <DemoDistributors state={distributors} setState={setDistributors} persona={persona} onPersonaChange={(next) => setParams({persona:next})} products={visibleProducts} />}
 
       {view === 'favoritos' && <Panel title="Meus favoritos">
         {visibleProducts.filter((product) => favorites.includes(product.id)).length === 0 ? <EmptyState>Você ainda não tem produtos favoritos neste cenário.</EmptyState> : <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
