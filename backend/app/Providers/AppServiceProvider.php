@@ -95,8 +95,13 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(3)->by('password-reset-email|'.Str::lower((string) $request->input('email')).'|'.$request->ip()),
         ]);
 
+        RateLimiter::for('email-code', fn (Request $request) => [
+            Limit::perMinute(10)->by('email-code|'.$request->user()?->id.'|'.$request->ip()),
+        ]);
+
         RateLimiter::for('email-verification', fn (Request $request) => [
             Limit::perMinute(5)->by('email-verification|'.$request->ip().'|'.$request->user()?->id),
+            Limit::perHour(5)->by('email-verification-user|'.($request->user()?->id ?? $request->ip())),
         ]);
 
         RateLimiter::for('two-factor', fn (Request $request) => [

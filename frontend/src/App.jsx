@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+<<<<<<< HEAD
 import DistributorArea from './components/DistributorArea';
+=======
+import EmailConfirmation from './components/EmailConfirmation';
+>>>>>>> 6a0d5e60928d359454fc8e8e9c5a8171d57a4139
 import Navbar from './components/Navbar';
 import ProductCard from './components/ProductCard';
 import ProductModal from './components/ProductModal';
@@ -115,9 +119,9 @@ export default function App() {
     try {
       await ensureCsrfCookie();
       const { data } = await api.post('/email/verification-notification');
-      setEmailVerificationNotice(data.message || 'Enviamos um novo link de confirmação.');
-    } catch {
-      setEmailVerificationNotice('Não foi possível enviar o email agora. Tente novamente mais tarde.');
+      setEmailVerificationNotice(data.message || 'Enviamos um código de confirmação.');
+    } catch (failure) {
+      setEmailVerificationNotice(failure.response?.data?.errors?.email?.[0] || (failure.response?.status === 429 ? 'Limite de reenvios atingido. Aguarde antes de tentar novamente.' : failure.response?.data?.message) || 'Não foi possível enviar o email agora. Tente novamente mais tarde.');
     } finally {
       setEmailVerificationLoading(false);
     }
@@ -247,12 +251,7 @@ export default function App() {
         </div>
       )}
       {!localTestMode && user?.role === 'customer' && !user.email_verified_at && (
-        <div className="mx-auto mt-3 flex w-[min(96%,80rem)] flex-col gap-2 rounded-xl border border-warning-line-strong bg-warning-soft px-4 py-3 text-sm text-warning-ink sm:flex-row sm:items-center sm:justify-between">
-          <span>Confirme o email <strong>{user.email}</strong> para liberar a compra.</span>
-          <button type="button" onClick={handleResendVerification} disabled={emailVerificationLoading} className="self-start font-semibold underline disabled:opacity-60 sm:self-auto">
-            {emailVerificationLoading ? 'Enviando…' : 'Reenviar confirmação'}
-          </button>
-        </div>
+        <EmailConfirmation key={user.id} user={user} resending={emailVerificationLoading} onResend={handleResendVerification} onVerified={(confirmed) => { setUser(confirmed); setEmailVerificationNotice('Email confirmado. Você já pode continuar sua compra.'); }} />
       )}
 
       {/* ROTEAMENTO / VISÕES DA APLICAÇÃO */}
@@ -514,7 +513,8 @@ export default function App() {
           setUser(authUser);
           setIsAuthOpen(false);
         }}
-        onRegisterSuccess={(authUser) => {
+        onRegisterSuccess={(authUser, message) => {
+          setEmailVerificationNotice(message || 'Digite o código recebido para confirmar seu email.');
           setUser(authUser);
           setIsAuthOpen(false);
           if (authUser.is_distributor) setCurrentView('distribuidores');

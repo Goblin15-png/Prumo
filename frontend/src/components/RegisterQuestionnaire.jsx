@@ -156,7 +156,7 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
         });
 
         if (onRegisterSuccess) {
-          onRegisterSuccess(res.data.user);
+          onRegisterSuccess(res.data.user, res.data.message);
         } else {
           if (onAuthSuccess) onAuthSuccess(res.data.user);
           onClose();

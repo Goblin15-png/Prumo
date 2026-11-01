@@ -1,3 +1,5 @@
+> **Configuração atual (01/11/2026): Laravel no Render serve loja React, painel e API no mesmo endereço. Siga [LARAVEL_HOSTING.md](LARAVEL_HOSTING.md). As instruções de frontend separado/Vercel abaixo são históricas e não devem ser aplicadas ao deploy atual.**
+
 # Preparação para hospedagem pública
 
 O projeto usa Laravel 12 no backend e React/Vite no frontend. A loja definitiva inclui catálogo, cadastro de clientes, painel `/admin` e checkout transparente dentro do site, com Pix e cartão via Orders do Mercado Pago. O backend também possui cotação do Melhor Envio. O código ainda depende de configuração do ambiente, credenciais e testes de ponta a ponta em homologação antes de aceitar vendas. O fluxo Checkout Pro permanece apenas para compatibilidade com pedidos e notificações anteriores; detalhes em [CHECKOUT_TRANSPARENTE.md](CHECKOUT_TRANSPARENTE.md).

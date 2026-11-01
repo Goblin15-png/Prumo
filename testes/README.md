@@ -62,3 +62,19 @@ O preenchimento por CEP também pode ser experimentado nessa prévia: digite `00
 Para consultar **CEPs reais pelo ViaCEP**, execute `npm --prefix testes run local -- --real-cep` (ou `npm --prefix testes run local -- 4181 --real-cep` para outra porta). Essa opção libera apenas consultas de endereço ao ViaCEP; catálogo, contas, frete e pagamento continuam simulados, sem cobranças ou etiquetas. O aviso na tela identifica essa diferença. O site definitivo usa ViaCEP por padrão; Correios oficial continua disponível por configuração em `../CORREIOS_CEP.md`. O Melhor Envio real é configurado separadamente conforme `../MELHOR_ENVIO.md`.
 
 `browser/browser-postal-code-live.mjs` confere o preenchimento no navegador usando a prévia `--real-cep` na porta 4180 e o CEP público de exemplo do ViaCEP (`01001-000`). Esse teste é optativo, exige rede e não cria pedidos; use as mesmas variáveis do Playwright dos demais testes. A suíte automática habitual continua isolada.
+
+## Diagnóstico público após deploy
+
+Com Node 22+, execute `npm --prefix testes run check:deploy`. Opcionalmente informe a origem HTTPS única: `npm --prefix testes run check:deploy -- https://SITE`. O comando faz somente GET de runtime-config e CSRF, sem criar contas ou consultar diretamente o banco. Não segue redirecionamentos, não reutiliza cookies e não imprime seus valores. CSRF pode inicializar uma sessão anônima no Laravel. Código de saída 1 indica falha de rede/contrato/configuração; não comprova falha do banco. Um resultado positivo também não homologa cadastro, email ou MFA.
+
+O padrão é o domínio Laravel informado pela equipe. Para homologação use o domínio Laravel de homologação. `npm --prefix testes run test:deploy` testa o diagnóstico com respostas fictícias, sem rede.
+
+## Confirmação de email por código
+
+Configuração de Gmail e limites do Render em [EMAIL_CONFIRMATION.md](../EMAIL_CONFIRMATION.md). `EmailVerificationCodeTest` cobre hash/ocultação, conta destinatária, confirmação, expiração, tentativas, cooldown e falha de entrega. Para PHP: `npm --prefix testes run test:php -- --filter 'EmailVerificationCodeTest|SecurityControlsTest'`.
+
+Com build da loja e Playwright externo: `PLAYWRIGHT_MODULE=/caminho/playwright/index.mjs node testes/browser/browser-email-confirmation.mjs`. O teste inicia um servidor temporário, bloqueia conexões externas e usa API fictícia para verificar reenvio, erro e atualização da conta confirmada. Nenhum email real é enviado.
+
+## Loja servida pelo Laravel
+
+`StorefrontHostingTest` verifica rotas de loja/painel/reset, ausência de build, isolamento de API/arquivos e recuperação no domínio configurado. O workflow também compila a imagem Docker unificada e verifica que HTML, assets e index.php estão presentes sem fontes de testes ou .env. `LARAVEL_HOSTING.md` descreve o contexto de build.

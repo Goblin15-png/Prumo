@@ -9,7 +9,7 @@ use App\Models\User;
 use App\Models\UserProfile;
 use App\Services\RecommendationService;
 use Illuminate\Auth\Notifications\ResetPassword as ResetPasswordNotification;
-use Illuminate\Auth\Notifications\VerifyEmail as VerifyEmailNotification;
+use App\Notifications\EmailVerificationCode as VerifyEmailNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request as ClientRequest;
 use Illuminate\Support\Facades\DB;
@@ -125,9 +125,9 @@ class SecurityControlsTest extends TestCase
         $this->assertNull($user->email_verified_at);
         $this->assertDatabaseCount('user_profiles', 0);
         Notification::assertSentTo($user, VerifyEmailNotification::class, function ($notification) use ($user) {
-            $url = $notification->toMail($user)->actionUrl;
-            $this->assertStringContainsString('/api/v1/email/verify/'.$user->id.'/', $url);
-            $this->assertStringContainsString('signature=', $url);
+            $this->assertMatchesRegularExpression('/^[0-9]{6}$/', $notification->code);
+            $this->assertSame(['bernadin15.dev@gmail.com', 'PRUMA ESSENTIAL'], $notification->toMail($user)->from);
+            $this->assertTrue(Hash::check($notification->code, $user->email_code_hash));
 
             return true;
         });

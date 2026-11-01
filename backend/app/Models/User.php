@@ -32,6 +32,10 @@ class User extends Authenticatable implements MustVerifyEmailContract
 
     protected $hidden = [
         'password',
+        'email_code_hash',
+        'email_code_expires_at',
+        'email_code_sent_at',
+        'email_code_attempts',
         'remember_token',
         'admin_access_version',
         'two_factor_secret',
@@ -40,7 +44,13 @@ class User extends Authenticatable implements MustVerifyEmailContract
 
     protected $casts = [
         'email_verified_at' => 'datetime',
+<<<<<<< HEAD
         'is_distributor' => 'boolean',
+=======
+        'email_code_expires_at' => 'datetime',
+        'email_code_sent_at' => 'datetime',
+        'email_code_attempts' => 'integer',
+>>>>>>> 6a0d5e60928d359454fc8e8e9c5a8171d57a4139
         'password' => 'hashed',
         'two_factor_secret' => 'encrypted',
         'two_factor_recovery_codes' => 'encrypted:array',
@@ -48,6 +58,11 @@ class User extends Authenticatable implements MustVerifyEmailContract
         'two_factor_last_step' => 'integer',
         'password_reset_required' => 'boolean',
     ];
+
+    public function sendEmailVerificationNotification(): void
+    {
+        app(\App\Services\EmailVerificationCodes::class)->send($this);
+    }
 
     public function isAdmin(): bool
     {

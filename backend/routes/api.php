@@ -132,6 +132,8 @@ Route::prefix('v1')->group(function () use ($localTestMode, $emailVerificationMi
         });
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/logout', [AuthController::class, 'logout']);
+        Route::post('/email/confirm-code', [EmailVerificationController::class, 'confirm'])
+            ->middleware('throttle:email-code');
         Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
             ->middleware('throttle:email-verification');
         Route::post('/user/profile', [UserProfileController::class, 'storeOrUpdate']);
