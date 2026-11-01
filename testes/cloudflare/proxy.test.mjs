@@ -3,7 +3,7 @@ import test from 'node:test';
 import worker, { handleRequest } from '../../cloudflare/worker.mjs';
 const site = 'https://pruma.example.invalid';
 const origin = 'https://api.example.invalid';
-const env = {LARAVEL_ORIGIN:origin,ASSETS:{fetch:() => new Response('ASSET-FICTICIO')}};
+const env = {FRONTEND_ORIGIN:site,LARAVEL_ORIGIN:origin,ASSETS:{fetch:() => new Response('ASSET-FICTICIO')}};
 const api = (path='/api/v1/runtime-config',options) => new Request(site+path,options);
 
 test('página, painel e arquivos estáticos continuam no binding de assets',async () => {
@@ -148,4 +148,12 @@ test('a assinatura fetch do Worker aceita ExecutionContext sem tratá-lo como fe
   const response = await worker.fetch(api(),{}, {waitUntil:() => {}});
   assert.equal(response.status,503);
   assert.equal((await response.json()).code,'API_NOT_CONFIGURED');
+});
+
+test('preview ou origem pública ausente não acessa a API de produção', async () => {
+  for (const configured of [undefined, 'https://production.example.invalid']) {
+    const response = await handleRequest(api('/api/v1/register', {method:'POST',body:'{}'}), {...env,FRONTEND_ORIGIN:configured}, () => assert.fail('Preview não deve consultar produção.'));
+    assert.equal(response.status,503);
+    assert.equal((await response.json()).code,'API_PREVIEW_NOT_CONFIGURED');
+  }
 });

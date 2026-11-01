@@ -4,7 +4,7 @@
 
 O endereço fornecido, `https://prumo.bernadin15-dev.workers.dev/`, respondia com o HTML de desenvolvimento, incluindo `<script type="module" src="/src/main.jsx">`. Esse arquivo era servido como `text/jsx`, com JSX e imports de pacotes não compilados; `/theme-init.js` retornava 404. Isso impede o navegador de iniciar a aplicação. Não é um problema que se resolva cadastrando cartão.
 
-O endereço é de **Workers**, não Pages. A configuração `frontend/vercel.json` também não configura um Worker. O arquivo `wrangler.json` na raiz serve o build estático em `frontend/dist`, habilita navegação SPA (inclusive `/admin` e `/reset-password`) e associa `cloudflare/worker.mjs` ao encaminhamento da API. Os cabeçalhos estáticos em `frontend/public/_headers` preservam as proteções básicas já previstas na configuração Vercel; a política CSP completa continua sendo emitida no HTML pelo Vite. O Worker não executa PHP, não cria MySQL e não publica a pasta backend ou arquivos de testes. O script de transporte é executado no Worker; o React continua sendo servido apenas como build compilado.
+O endereço é de **Workers**, não Pages. A configuração `frontend/vercel.json` também não configura um Worker. O arquivo `wrangler.json` na raiz serve o build estático em `frontend/dist`, habilita navegação SPA (inclusive `/admin` e `/reset-password`) e associa `cloudflare/worker.mjs` ao encaminhamento da API. Os cabeçalhos estáticos em `frontend/public/_headers` preservam as proteções básicas já previstas na configuração Vercel; a política CSP completa continua sendo emitida no HTML pelo Vite. O Worker não executa PHP, não cria PostgreSQL e não publica a pasta backend ou arquivos de testes. O script de transporte é executado no Worker; o React continua sendo servido apenas como build compilado.
 
 ## Se o Worker estiver conectado ao GitHub
 
@@ -45,9 +45,9 @@ O deploy real é uma etapa separada. O upload manual apenas de pastas publica a 
 
 O site usa `/api/v1` por padrão. O Worker executa primeiro nas rotas `/api`, `/api/*`, `/sanctum` e `/sanctum/*`, impedindo que a navegação SPA devolva HTML no lugar de uma API. Encaminha somente `/api/v1/*` (e sua raiz) e `/sanctum/csrf-cookie` ao Laravel; outros caminhos desses namespaces retornam JSON 404.
 
-**Dado ainda necessário:** a URL HTTPS pública do Laravel. O PR de Docker para Render prepara a imagem, mas não comprova que a API foi publicada, configurada ou conectada ao banco. Não há URL de backend fictícia configurada no código.
+A URL pública confirmada é `https://prumo-backend-x6w9.onrender.com`. `wrangler.json` define `LARAVEL_ORIGIN` com essa origem e `FRONTEND_ORIGIN=https://prumo.bernadin15-dev.workers.dev`. São URLs públicas, sem credenciais. O Worker só encaminha a API quando o domínio acessado coincide com `FRONTEND_ORIGIN`; previews em outro hostname recebem JSON 503 e continuam podendo servir os assets.
 
-No Worker **prumo**, em **Settings → Variables and Secrets**, configure a variável de runtime `LARAVEL_ORIGIN` com a origem real da API (protocolo HTTPS e hostname, sem `/api/v1`, caminho, query, usuário ou senha). `keep_vars=true` preserva as variáveis gerenciadas no painel nos deploys seguintes. A URL não é credencial de banco; tokens, APP_KEY e senhas continuam apenas no Laravel.
+Para homologação, configure **ambas** as variáveis com backend e frontend de homologação no ambiente correspondente. Não aponte previews para produção. `keep_vars=true` preserva variáveis do painel; revise/remova overrides antigos no deploy. Nenhuma alteração deste PR configura a conta Cloudflare automaticamente.
 
 No build do React, mantenha `VITE_API_BASE_URL=/api/v1` ou ausente. Assim o navegador fala com o mesmo domínio da loja e o Worker faz a ligação HTTP ao servidor Laravel. Não aponte o navegador diretamente para um domínio externo apenas para contornar esse encaminhamento.
 
@@ -67,7 +67,7 @@ SESSION_SECURE_COOKIE=true
 SESSION_SAME_SITE=lax
 ```
 
-`APP_URL` deve ser a URL HTTPS real do Laravel. Mantenha a configuração MySQL e credenciais somente no backend. Não altere `APP_KEY` de uma instalação com dados cifrados. O nome de cookie atual deve permanecer estável durante a atualização; o painel mantém o sufixo `_admin_v1` e seu CSRF próprio. O proxy não reescreve atributos Domain: `SESSION_DOMAIN=null` é necessário para cookies por host no endereço público.
+`APP_URL` deve ser a URL HTTPS real do Laravel. Use PostgreSQL no Render conforme `POSTGRESQL.md` e o modelo sem segredos `backend/.env.render.example`. Credenciais ficam somente no backend. Não altere `APP_KEY` de uma instalação com dados cifrados. O nome de cookie atual deve permanecer estável durante a atualização; o painel mantém o sufixo `_admin_v1` e seu CSRF próprio. O proxy não reescreve atributos Domain: `SESSION_DOMAIN=null` é necessário para cookies por host no endereço público.
 
 Configure `TRUSTED_PROXIES` conforme os IPs/faixas efetivamente usados pelo provedor e valide HTTPS/IP original passando por Cloudflare e Render. Não presuma que `*` seja apropriado. O Worker descarta os cabeçalhos de encaminhamento fornecidos pelo cliente, preserva o Host do origin e usa o IP da plataforma quando há contexto Cloudflare; o backend ainda precisa reconhecer corretamente seus proxies para rate limiting, URLs e auditoria.
 

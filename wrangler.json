@@ -13,5 +13,9 @@
     ]
   },
   "main": "cloudflare/worker.mjs",
-  "keep_vars": true
+  "keep_vars": true,
+  "vars": {
+    "LARAVEL_ORIGIN": "https://prumo-backend-x6w9.onrender.com",
+    "FRONTEND_ORIGIN": "https://prumo.bernadin15-dev.workers.dev"
+  }
 }

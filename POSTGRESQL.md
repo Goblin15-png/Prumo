@@ -1,6 +1,19 @@
 # PostgreSQL gerenciado
 
-Decisão de 19/10/2026: React na Vercel, Laravel em hospedagem PHP e PostgreSQL gerenciado. Provedores do backend e do banco ainda pendentes. Este documento prepara a configuração; nenhuma conta externa, regra de firewall, backup ou banco de produção foi criado.
+Confirmado em 01/11/2026: PostgreSQL no Render, Laravel em `https://prumo-backend-x6w9.onrender.com` e frontend Cloudflare em `https://prumo.bernadin15-dev.workers.dev`. As instruções Vercel permanecem para essa alternativa; não substituem a configuração Workers em `CLOUDFLARE.md`. A confirmação não comprova migrações, backups ou fluxos autenticados homologados.
+
+## Configuração específica do Render
+
+Use `backend/.env.render.example` como referência para **Environment do serviço Laravel**. Não copie o arquivo por cima de um ambiente existente nem gere outra APP_KEY se houver dados cifrados.
+
+- `DB_CONNECTION=pgsql` e `DB_URL` com a URL interna atual do banco, preenchida privadamente no Render. O código lê `DB_URL`, não `DATABASE_URL`. A URL interna só é alcançável por serviços Render da mesma conta/região; nunca deve ir ao Cloudflare, React ou variáveis `VITE_*`.
+- `DB_SSLMODE=require`: exige TLS para o endpoint interno Render, cujos certificados são autoassinados e não suportam `verify-full`/`verify-ca`. Este é um ajuste por ambiente; o padrão genérico continua `verify-full`. Revise parâmetros `sslmode` da própria URL, que podem prevalecer. [Documentação oficial Render](https://render.com/docs/postgresql-creating-connecting).
+- A imagem `backend/Dockerfile` já inclui `pdo_pgsql`; não precisa trocar a stack React/Laravel. React é o frontend, Laravel é o backend.
+- A credencial anteriormente compartilhada no chat deve ser rotacionada no Render; atualize o segredo do backend depois. Não copie a credencial antiga para commits, testes ou documentação.
+- Configure URLs, Sanctum e cookies do modelo; confirme IPs/CIDRs de proxies com a hospedagem antes de preencher `TRUSTED_PROXIES`. Não use `*` sem análise. Atualize o cache de configuração no processo de implantação existente.
+
+Em verificação pública, `/up`, `/api/v1/runtime-config` e `/api/v1/products` responderam 200; isso não identifica o banco conectado nem comprova cadastro. A paginação de produtos gerou links HTTP apesar da requisição HTTPS: valide `APP_URL` e reconhecimento de proxies antes de homologar confirmação de email/URLs assinadas. Não se aplicou migração nem se criou conta real.
+
 
 ## Acesso e rede
 
@@ -60,4 +73,4 @@ Uma exportação com `pg_dump` pode complementar os backups gerenciados; não su
 
 ## Evidência ainda necessária
 
-Sem os provedores escolhidos, ainda faltam: provisionamento, rede privada/allowlist, grants da aplicação/manutenção, TLS validado numa conexão real, migrações e fluxos em PostgreSQL, backups automáticos e restauração comprovada. A preparação local não garante esses controles no servidor.
+Com Render escolhido, ainda é necessário comprovar: provisionamento, rede privada/allowlist, grants da aplicação/manutenção, TLS validado numa conexão real, migrações e fluxos em PostgreSQL, backups automáticos e restauração comprovada. A preparação local não garante esses controles no servidor.

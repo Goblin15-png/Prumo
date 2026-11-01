@@ -49,6 +49,10 @@ export async function handleRequest(request, env, send = fetch) {
 
   const origin = backendOrigin(env.LARAVEL_ORIGIN, publicUrl);
   if (!origin) return problem(503, 'API_NOT_CONFIGURED', 'A API Laravel ainda não foi conectada. Entre em contato com o responsável pela loja.');
+  // Previews não devem encaminhar operações para a API de produção.
+  if (env.FRONTEND_ORIGIN !== publicUrl.origin) {
+    return problem(503, 'API_PREVIEW_NOT_CONFIGURED', 'Configure uma API e uma origem pública próprias para este ambiente.');
+  }
   const target = new URL(origin);
   target.pathname = publicUrl.pathname;
   target.search = publicUrl.search;
