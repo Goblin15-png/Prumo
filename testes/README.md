@@ -66,3 +66,9 @@ Para consultar **CEPs reais pelo ViaCEP**, execute `npm --prefix testes run loca
 ## Transporte Cloudflare → Laravel
 
 `npm --prefix testes run test:proxy` executa testes Node do Worker em `cloudflare/`, com fetch fictício. Cobre seleção de rotas/assets, configuração ausente/inválida, destino fixo, cadastro/corpo, cookies/CSRF, assinatura de webhook, cabeçalhos de encaminhamento, redirects sem repetição, cache desabilitado e erros do Laravel preservados. Não usa PHP, não cria contas e não faz chamadas externas. O comando é separado da suíte de demo para que possa ser executado sem frontend/node_modules. A URL real e as etapas de homologação estão em [CLOUDFLARE.md](../CLOUDFLARE.md).
+
+## Diagnóstico público após deploy
+
+Com Node 22+, execute `npm --prefix testes run check:deploy`. Opcionalmente informe origens HTTPS: `npm --prefix testes run check:deploy -- https://FRONTEND https://BACKEND`. O comando faz somente GET de runtime-config e CSRF, sem criar contas ou consultar diretamente o banco. Não segue redirecionamentos, não reutiliza cookies e não imprime seus valores. CSRF pode inicializar uma sessão anônima no Laravel. Código de saída 1 indica falha de rede/contrato/configuração; não comprova falha do banco. Um resultado positivo também não homologa cadastro, email ou MFA.
+
+Os defaults são os domínios públicos informados pela equipe. Para homologação use ambos os domínios de homologação. `npm --prefix testes run test:deploy` testa o diagnóstico com respostas fictícias, sem rede.
