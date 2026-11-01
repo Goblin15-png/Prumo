@@ -26,4 +26,4 @@ RUN a2enmod rewrite \
 
 ENV PORT=10000
 EXPOSE 10000
-CMD ["apache2-foreground"]
+CMD ["sh", "/var/www/html/docker/migrate-and-start.sh"]

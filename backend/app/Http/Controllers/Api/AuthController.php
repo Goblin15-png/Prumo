@@ -49,9 +49,11 @@ class AuthController extends Controller
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
 
+        $verificationSent = false;
         if (! $localTestMode) {
             try {
                 $user->sendEmailVerificationNotification();
+                $verificationSent = true;
             } catch (\Throwable $exception) {
                 Log::warning('Falha ao enviar confirmação de email.', [
                     'exception' => get_class($exception),
@@ -62,7 +64,8 @@ class AuthController extends Controller
         return response()->json([
             'message' => $localTestMode
                 ? 'Conta criada no modo de teste local. Nenhum email de confirmação é necessário.'
-                : 'Conta criada. Confira seu email para confirmar o endereço antes de comprar.',
+                : ($verificationSent ? 'Conta criada. Digite o código enviado ao seu email.' : 'Conta criada, mas não foi possível enviar o código. Solicite o reenvio para confirmar seu email.'),
+            'email_verification_sent' => $verificationSent,
             'email_verification_required' => ! $localTestMode,
             'user' => $user->load('profile'),
         ], 201);

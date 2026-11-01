@@ -72,3 +72,9 @@ Para consultar **CEPs reais pelo ViaCEP**, execute `npm --prefix testes run loca
 Com Node 22+, execute `npm --prefix testes run check:deploy`. Opcionalmente informe origens HTTPS: `npm --prefix testes run check:deploy -- https://FRONTEND https://BACKEND`. O comando faz somente GET de runtime-config e CSRF, sem criar contas ou consultar diretamente o banco. Não segue redirecionamentos, não reutiliza cookies e não imprime seus valores. CSRF pode inicializar uma sessão anônima no Laravel. Código de saída 1 indica falha de rede/contrato/configuração; não comprova falha do banco. Um resultado positivo também não homologa cadastro, email ou MFA.
 
 Os defaults são os domínios públicos informados pela equipe. Para homologação use ambos os domínios de homologação. `npm --prefix testes run test:deploy` testa o diagnóstico com respostas fictícias, sem rede.
+
+## Confirmação de email por código
+
+Configuração de Gmail e limites do Render em [EMAIL_CONFIRMATION.md](../EMAIL_CONFIRMATION.md). `EmailVerificationCodeTest` cobre hash/ocultação, conta destinatária, confirmação, expiração, tentativas, cooldown e falha de entrega. Para PHP: `npm --prefix testes run test:php -- --filter 'EmailVerificationCodeTest|SecurityControlsTest'`.
+
+Com build da loja e Playwright externo: `PLAYWRIGHT_MODULE=/caminho/playwright/index.mjs node testes/browser/browser-email-confirmation.mjs`. O teste inicia um servidor temporário, bloqueia conexões externas e usa API fictícia para verificar reenvio, erro e atualização da conta confirmada. Nenhum email real é enviado.
