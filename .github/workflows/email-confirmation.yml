@@ -17,6 +17,8 @@ jobs:
           php-version: '8.4'
           extensions: mbstring, dom, intl, pdo_sqlite, bcmath
           coverage: none
+      - run: mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
+        working-directory: backend
       - run: composer install --no-interaction --prefer-dist
         working-directory: backend
       - run: cp .env.example .env && php artisan key:generate
