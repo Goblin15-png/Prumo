@@ -45,7 +45,7 @@ MAIL_FROM_NAME="PRUMA ESSENTIAL"
 ## Implantação e validação
 
 1. Publicar primeiro o proxy do PR #9 e as variáveis de sessão/URL descritas em CLOUDFLARE.md.
-2. Revisar e aplicar a nova migração **aditiva**, que acrescenta quatro campos em users. Não usa reset/fresh nem converte dados existentes. Fazer backup e aplicar no processo de deploy aprovado: `php artisan migrate --force`. O Dockerfile atual inicia Apache diretamente; a existência de docker/migrate-and-start.sh não significa que esteja sendo chamado. Não houve execução em produção por este PR.
+2. Revisar e aplicar a nova migração **aditiva**, que acrescenta quatro campos em users. Não usa reset/fresh nem converte dados existentes. Fazer backup e aplicar no processo de deploy aprovado: `php artisan migrate --force`. O Dockerfile chama docker/migrate-and-start.sh, que atualiza o cache de configuração e executa as migrações pendentes antes de iniciar Apache. Se configuração ou migração falhar, o processo termina sem iniciar o servidor; investigar o log do deploy, sem usar migrate:fresh/reset. Revise também outras migrações pendentes antes da publicação. Não houve execução em produção por este PR.
 3. Atualizar cache de configuração conforme processo da hospedagem (`php artisan config:cache`) após preencher segredos. Preservar APP_KEY existente.
 4. Publicar frontend/backend compatíveis e testar em homologação com conta fictícia e caixa de email controlada: cadastro, recebimento, erro de código, confirmação, expiração, reenvio, login e checkout bloqueado até confirmar. Conferir remetente e destinatário sem expor o código em logs.
 5. Para contas antigas não confirmadas, entrar e solicitar reenvio. Recuperação de senha continua sendo fluxo separado e usa o transporte global configurado.

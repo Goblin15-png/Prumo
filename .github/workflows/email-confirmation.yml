@@ -19,6 +19,7 @@ jobs:
           coverage: none
       - run: mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
         working-directory: backend
+      - run: npm --prefix testes run test:deploy
       - run: composer install --no-interaction --prefer-dist
         working-directory: backend
       - run: cp .env.example .env && php artisan key:generate
