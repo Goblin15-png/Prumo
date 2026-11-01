@@ -1,6 +1,6 @@
 # PostgreSQL gerenciado
 
-Confirmado em 01/11/2026: PostgreSQL no Render, Laravel em `https://prumo-backend-x6w9.onrender.com` e frontend Cloudflare em `https://prumo.bernadin15-dev.workers.dev`. As instruções Vercel permanecem para essa alternativa; não substituem a configuração Workers em `CLOUDFLARE.md`. A confirmação não comprova migrações, backups ou fluxos autenticados homologados.
+Confirmado em 01/11/2026: PostgreSQL no Render, Laravel em `https://prumo-backend-x6w9.onrender.com` e interface React/painel servidos pelo próprio Laravel, no mesmo endereço. Cloudflare foi descontinuado. A configuração atual está em `LARAVEL_HOSTING.md`; instruções Vercel/Workers anteriores são históricas. A confirmação não comprova migrações, backups ou fluxos autenticados homologados.
 
 ## Configuração específica do Render
 

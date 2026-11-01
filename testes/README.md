@@ -63,18 +63,18 @@ Para consultar **CEPs reais pelo ViaCEP**, execute `npm --prefix testes run loca
 
 `browser/browser-postal-code-live.mjs` confere o preenchimento no navegador usando a prévia `--real-cep` na porta 4180 e o CEP público de exemplo do ViaCEP (`01001-000`). Esse teste é optativo, exige rede e não cria pedidos; use as mesmas variáveis do Playwright dos demais testes. A suíte automática habitual continua isolada.
 
-## Transporte Cloudflare → Laravel
-
-`npm --prefix testes run test:proxy` executa testes Node do Worker em `cloudflare/`, com fetch fictício. Cobre seleção de rotas/assets, configuração ausente/inválida, destino fixo, cadastro/corpo, cookies/CSRF, assinatura de webhook, cabeçalhos de encaminhamento, redirects sem repetição, cache desabilitado e erros do Laravel preservados. Não usa PHP, não cria contas e não faz chamadas externas. O comando é separado da suíte de demo para que possa ser executado sem frontend/node_modules. A URL real e as etapas de homologação estão em [CLOUDFLARE.md](../CLOUDFLARE.md).
-
 ## Diagnóstico público após deploy
 
-Com Node 22+, execute `npm --prefix testes run check:deploy`. Opcionalmente informe origens HTTPS: `npm --prefix testes run check:deploy -- https://FRONTEND https://BACKEND`. O comando faz somente GET de runtime-config e CSRF, sem criar contas ou consultar diretamente o banco. Não segue redirecionamentos, não reutiliza cookies e não imprime seus valores. CSRF pode inicializar uma sessão anônima no Laravel. Código de saída 1 indica falha de rede/contrato/configuração; não comprova falha do banco. Um resultado positivo também não homologa cadastro, email ou MFA.
+Com Node 22+, execute `npm --prefix testes run check:deploy`. Opcionalmente informe a origem HTTPS única: `npm --prefix testes run check:deploy -- https://SITE`. O comando faz somente GET de runtime-config e CSRF, sem criar contas ou consultar diretamente o banco. Não segue redirecionamentos, não reutiliza cookies e não imprime seus valores. CSRF pode inicializar uma sessão anônima no Laravel. Código de saída 1 indica falha de rede/contrato/configuração; não comprova falha do banco. Um resultado positivo também não homologa cadastro, email ou MFA.
 
-Os defaults são os domínios públicos informados pela equipe. Para homologação use ambos os domínios de homologação. `npm --prefix testes run test:deploy` testa o diagnóstico com respostas fictícias, sem rede.
+O padrão é o domínio Laravel informado pela equipe. Para homologação use o domínio Laravel de homologação. `npm --prefix testes run test:deploy` testa o diagnóstico com respostas fictícias, sem rede.
 
 ## Confirmação de email por código
 
 Configuração de Gmail e limites do Render em [EMAIL_CONFIRMATION.md](../EMAIL_CONFIRMATION.md). `EmailVerificationCodeTest` cobre hash/ocultação, conta destinatária, confirmação, expiração, tentativas, cooldown e falha de entrega. Para PHP: `npm --prefix testes run test:php -- --filter 'EmailVerificationCodeTest|SecurityControlsTest'`.
 
 Com build da loja e Playwright externo: `PLAYWRIGHT_MODULE=/caminho/playwright/index.mjs node testes/browser/browser-email-confirmation.mjs`. O teste inicia um servidor temporário, bloqueia conexões externas e usa API fictícia para verificar reenvio, erro e atualização da conta confirmada. Nenhum email real é enviado.
+
+## Loja servida pelo Laravel
+
+`StorefrontHostingTest` verifica rotas de loja/painel/reset, ausência de build, isolamento de API/arquivos e recuperação no domínio configurado. O workflow também compila a imagem Docker unificada e verifica que HTML, assets e index.php estão presentes sem fontes de testes ou .env. `LARAVEL_HOSTING.md` descreve o contexto de build.

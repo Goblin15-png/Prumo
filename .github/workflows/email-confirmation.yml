@@ -2,8 +2,12 @@ name: Email confirmation
 on:
   pull_request:
     paths:
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'frontend/**'
       - 'backend/**'
       - 'testes/backend/**'
+      - 'testes/deploy/**'
       - '.github/workflows/email-confirmation.yml'
 permissions:
   contents: read
@@ -24,4 +28,10 @@ jobs:
         working-directory: backend
       - run: cp .env.example .env && php artisan key:generate
         working-directory: backend
-      - run: npm --prefix testes run test:php -- --filter 'EmailVerificationCodeTest|SecurityControlsTest'
+      - run: npm --prefix testes run test:php -- --filter 'EmailVerificationCodeTest|SecurityControlsTest|StorefrontHostingTest|ExampleTest'
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t pruma-laravel .
+      - run: docker run --rm --entrypoint sh pruma-laravel -c 'test -f public/index.php && test -f public/storefront.html && test ! -f public/index.html && test -d public/assets && test ! -d testes && test ! -f .env'

@@ -18,7 +18,7 @@ Construir e evoluir um e-commerce de **blends**, com experiência de compra clar
 
 - **Frontend:** React 18, Vite 6, Tailwind CSS 4, Axios.
 - **Backend:** PHP 8.2+, Laravel 12, Laravel Sanctum, MFA TOTP (`pragmarx/google2fa`).
-- **Hospedagem/banco escolhidos em 19/10/2026:** frontend na Vercel, Laravel em hospedagem PHP e PostgreSQL gerenciado, restrito ao backend. Provedores do Laravel/PostgreSQL, domínios e rede ainda pendentes. Prévia/testes continuam com SQLite isolado; a decisão não significa que a infraestrutura já esteja criada ou homologada. Consulte `DEPLOYMENT.md` e `POSTGRESQL.md`.
+- **Hospedagem confirmada em 01/11/2026:** Laravel no Render serve a interface React compilada, o painel e a API no mesmo domínio; PostgreSQL é acessado somente pelo Laravel. Cloudflare foi retirado do fluxo a pedido do responsável. Dockerfile da raiz exige contexto do repositório completo. Consulte `LARAVEL_HOSTING.md`; documentação Vercel antiga é histórica. Prévia/testes continuam com SQLite isolado e não comprovam homologação de produção.
 - **Node.js:** utilizado no ecossistema/frontend; **não presumir um servidor Node independente** sem confirmar sua existência e responsabilidade no repositório. Se serviços Node forem necessários, discutir contratos antes de criá-los.
 - **Integrações planejadas/atuais:** Mercado Pago para pagamentos e Melhor Envio para frete.
 - **Estrutura observada no ZIP:** `frontend/`, `backend/`, `SECURITY.md`, `DEPLOYMENT.md` e `AGENTS.md`.
