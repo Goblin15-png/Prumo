@@ -27,11 +27,13 @@ export default function Navbar({
     ['Sobre nós', 'sobre'],
     ['Pedidos', 'pedidos'],
     ['Contato', 'home'],
+    ...(user?.is_distributor ? [['Distribuidores', 'distribuidores']] : []),
   ];
 
   const isNavLinkActive = (label, view) => (
     (label === 'Início' && currentView === 'home')
     || (label === 'Sobre nós' && view === 'sobre' && currentView === 'sobre')
+    || (label === 'Distribuidores' && currentView === 'distribuidores')
     || (label === 'Pedidos' && currentView === 'pedidos')
   );
 

@@ -40,6 +40,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
 
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'is_distributor' => 'boolean',
         'password' => 'hashed',
         'two_factor_secret' => 'encrypted',
         'two_factor_recovery_codes' => 'encrypted:array',

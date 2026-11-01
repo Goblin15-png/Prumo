@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ClipboardList, CreditCard, Minus, Plus, ShieldCheck, Trash2, UserRound } from 'lucide-react';
+import DistributorArea from '../../frontend/src/components/DistributorArea';
+import SupportPanel from '../../frontend/src/components/SupportPanel';
+import { createDemoDistributorWorkspace } from './demoDistributorService';
 import DemoCatalog from './DemoCatalog';
 import DemoCheckout from './DemoCheckout';
 import DemoCategoryManager from './DemoCategoryManager';
@@ -18,11 +21,11 @@ import {
 
 const menuItems = [
   ['inicio', 'Início'], ['favoritos', 'Favoritos'], ['carrinho', 'Sacola'],
-  ['checkout', 'Checkout'], ['conta', 'Minha conta'], ['pedidos', 'Pedidos'], ['admin', 'Admin simulado'],
+  ['checkout', 'Checkout'], ['conta', 'Minha conta'], ['pedidos', 'Pedidos'], ['admin', 'Admin simulado'], ['distribuidores', 'Distribuidor simulado'], ['suporte', 'Suporte administrativo'],
 ];
 const scenarioNames = {
   normal: 'Loja com produtos', vazio: 'Catálogo vazio', 'sem-estoque': 'Sem estoque',
-  'pagamento-recusado': 'Pagamento recusado', pago: 'Pagamento aprovado',
+  'pagamento-recusado': 'Pagamento recusado', pago: 'Pagamento aprovado', 'erro-distribuidor': 'Falha no portal do distribuidor',
 };
 const buttonClass = 'rounded-xl bg-[#5E1A2B] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#4A1422] disabled:cursor-not-allowed disabled:opacity-40';
 const fieldClass = 'w-full rounded-lg border border-line-strong bg-surface px-3 py-2 text-sm outline-none focus:border-brand-ink';
@@ -54,6 +57,9 @@ export default function DemoStudio({ standalone = false }) {
   const [search, setSearch] = useState('');
 
   const { view, persona, scenario } = route;
+  const distributorProductsRef = useRef(products);
+  distributorProductsRef.current = products;
+  const distributorDemo = useMemo(() => createDemoDistributorWorkspace({ empty: scenario === 'vazio', error: scenario === 'erro-distribuidor', getProducts: () => distributorProductsRef.current }), [scenario]);
   const visibleProducts = useMemo(() => applyScenario(products.filter((product) => product.is_active !== false), scenario), [products, scenario]);
   const user = persona === 'admin' ? demoAdmin : persona === 'cliente' ? demoCustomer : null;
 
@@ -117,6 +123,9 @@ export default function DemoStudio({ standalone = false }) {
       <nav aria-label="Páginas para testar" className="flex flex-wrap gap-2">
         {menuItems.map(([key, name]) => <button key={key} type="button" onClick={() => { setSearch(''); setParams({ view: key }); }} aria-current={view === key ? 'page' : undefined} className={`rounded-full border px-3 py-2 text-xs font-semibold ${view === key ? 'border-brand-ink bg-[#5E1A2B] text-white' : 'border-line bg-surface text-ink-muted hover:border-brand-ink'}`}>{name}{key === 'carrinho' ? ` (${cart.reduce((sum, item) => sum + item.quantity, 0)})` : ''}</button>)}
       </nav>
+
+      {view === 'distribuidores' && <DistributorArea key={scenario} user={{ id: 902, name: 'Distribuidor Demonstração', is_distributor: true }} service={distributorDemo.service} supportService={distributorDemo.distributorSupport} />}
+      {view === 'suporte' && <SupportPanel key={scenario} administrative service={distributorDemo.adminSupport} />}
 
       {view === 'inicio' && <DemoCatalog products={visibleProducts} categories={categories} favorites={favorites} onToggleFavorite={toggleFavorite} onQuickView={setSelectedProduct} search={search} onSearchChange={setSearch} />}
 

@@ -1,6 +1,6 @@
 // Dados e funções de demonstração. Nenhum dado deste módulo deve ser usado como registro real.
-export const DEMO_VIEWS = ['inicio', 'favoritos', 'carrinho', 'checkout', 'conta', 'pedidos', 'admin'];
-export const DEMO_SCENARIOS = ['normal', 'vazio', 'sem-estoque', 'pagamento-recusado', 'pago'];
+export const DEMO_VIEWS = ['inicio', 'favoritos', 'carrinho', 'checkout', 'conta', 'pedidos', 'admin', 'distribuidores', 'suporte'];
+export const DEMO_SCENARIOS = ['normal', 'vazio', 'sem-estoque', 'pagamento-recusado', 'pago', 'erro-distribuidor'];
 export const DEMO_PERSONAS = ['visitante', 'cliente', 'admin'];
 
 export const demoCategories = [

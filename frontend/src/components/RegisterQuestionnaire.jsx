@@ -1,3 +1,4 @@
+import { isValidCnpj } from '../services/cnpj';
 import React, { useEffect, useState } from 'react';
 import api, { ensureCsrfCookie, adminApi, ensureAdminCsrfCookie } from '../services/api';
 import { Sparkles, Lock, Mail, User, Eye, EyeOff } from 'lucide-react';
@@ -6,6 +7,7 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
   const authApi = administrative ? adminApi : api;
   const authCsrf = administrative ? ensureAdminCsrfCookie : ensureCsrfCookie;
   const [isLoginMode, setIsLoginMode] = useState(true);
+  const [isDistributorMode, setIsDistributorMode] = useState(false);
   const [isForgotMode, setIsForgotMode] = useState(false);
   const [isResetMode, setIsResetMode] = useState(window.location.pathname === '/reset-password');
   const [loading, setLoading] = useState(false);
@@ -25,6 +27,7 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
   // O cadastro da conta coleta apenas os dados necessários para login.
   const [formData, setFormData] = useState({
     name: '',
+    cnpj: '',
     email: resetEmail,
     password: '',
   });
@@ -38,6 +41,7 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
   useEffect(() => {
     if (!isOpen) return;
     setIsLoginMode(true);
+    setIsDistributorMode(false);
     setIsForgotMode(false);
     setErrorMessage(null);
     setNoticeMessage('');
@@ -62,6 +66,11 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
     e.preventDefault();
     if (!isLoginMode && !isForgotMode && !twoFactorMode && formData.password !== passwordConfirmation) {
       setErrorMessage('As senhas não conferem. Verifique e tente novamente.');
+      return;
+    }
+
+    if (!isLoginMode && isDistributorMode && !isForgotMode && !isResetMode && !isValidCnpj(formData.cnpj)) {
+      setErrorMessage('Informe um CNPJ válido. Confira os caracteres e os dígitos verificadores.');
       return;
     }
 
@@ -138,6 +147,8 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
         // O questionário opcional é oferecido logo após a criação da conta.
         await ensureCsrfCookie();
         const res = await api.post('/register', {
+          account_type: isDistributorMode ? 'distributor' : 'customer',
+          ...(isDistributorMode ? { cnpj: formData.cnpj } : {}),
           name: formData.name,
           email: formData.email,
           password: formData.password,
@@ -166,7 +177,7 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
         {/* Cabeçalho */}
         <div className="text-center mb-6">
           <span className="text-[10px] uppercase tracking-widest text-brand-ink font-bold bg-brand-ink/10 px-3 py-1 rounded-full">
-            {isForgotMode ? 'Recuperação de senha' : isResetMode ? 'Nova senha' : administrative ? 'Acesso administrativo' : isLoginMode ? 'Acessar Conta' : 'Cadastro de cliente'}
+            {isForgotMode ? 'Recuperação de senha' : isResetMode ? 'Nova senha' : administrative ? 'Acesso administrativo' : isLoginMode ? 'Acessar Conta' : isDistributorMode ? 'Cadastro de distribuidor' : 'Cadastro de cliente'}
           </span>
           <h2 className="text-2xl font-serif text-brand-ink mt-3 font-bold">
             {isForgotMode ? 'Recupere seu acesso' : isResetMode ? 'Defina uma nova senha' : administrative ? 'Entrar no painel' : isLoginMode ? 'Bem-vindo de Volta' : 'Crie sua conta'}
@@ -180,9 +191,23 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
               ? 'Use sua conta administrativa individual. O acesso exige autenticação em duas etapas.'
               : isLoginMode
               ? 'Informe seu email e senha para acompanhar seus pedidos e recomendações.'
+              : isDistributorMode
+              ? 'Crie sua conta de distribuidor para acessar a área de compras por lotes.'
               : 'Use nome, email e senha para criar a conta. Depois você escolhe se quer responder o questionário opcional.'}
           </p>
         </div>
+
+        {!administrative && !isForgotMode && !isResetMode && !twoFactorMode && recoveryCodes.length === 0 && (
+          <div className="mb-5 grid grid-cols-3 gap-1 rounded-xl bg-surface-subtle p-1" aria-label="Tipo de acesso">
+            {[[true, false, 'Entrar'], [false, false, 'Cliente'], [false, true, 'Distribuidor']].map(([login, distributor, label]) => (
+              <button key={label} type="button" disabled={loading} aria-pressed={isLoginMode === login && isDistributorMode === distributor}
+                onClick={() => { setIsLoginMode(login); setIsDistributorMode(distributor); setErrorMessage(null); setNoticeMessage(''); setPasswordConfirmation(''); setFormData((current) => ({ ...current, password: '' })); }}
+                className={`rounded-lg px-2 py-2 text-xs font-semibold ${isLoginMode === login && isDistributorMode === distributor ? 'bg-brand-ink text-white' : 'text-ink-muted hover:text-brand-ink'}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {noticeMessage && <div role="status" className="mb-4 rounded-xl border border-success-line bg-success-soft p-3 text-xs text-success-ink">{noticeMessage}</div>}
         {errorMessage && (
@@ -224,6 +249,17 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
                 />
                 <User className="w-4 h-4 text-ink-faint absolute left-3 top-2.5" />
               </div>
+            </div>
+          )}
+
+          {!isLoginMode && isDistributorMode && !isForgotMode && !isResetMode && (
+            <div>
+              <label htmlFor="distributor-cnpj" className="mb-1 block text-xs font-semibold text-ink-secondary">CNPJ *</label>
+              <input id="distributor-cnpj" name="cnpj" type="text" required maxLength={18} autoCapitalize="characters" spellCheck={false}
+                value={formData.cnpj} onChange={(event) => { setFormData((current) => ({ ...current, cnpj: event.target.value.toUpperCase() })); setErrorMessage(null); }}
+                placeholder="CNPJ da empresa" aria-describedby="cnpj-help"
+                className="w-full rounded-xl border border-line-strong bg-surface px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-brand-ink" />
+              <p id="cnpj-help" className="mt-1 text-xs text-ink-muted">Aceita números e letras, com ou sem pontuação. A validação dos dígitos não confirma a situação cadastral da empresa.</p>
             </div>
           )}
 
@@ -341,7 +377,7 @@ export default function RegisterQuestionnaire({ isOpen, onClose, onAuthSuccess, 
 
             <button
               type="button"
-              onClick={() => { setNoticeMessage(''); setIsForgotMode(false); setIsLoginMode(!isLoginMode); }}
+              onClick={() => { setNoticeMessage(''); setIsForgotMode(false); setIsLoginMode(!isLoginMode); setIsDistributorMode(false); setErrorMessage(null); }}
               className="text-xs text-ink-muted hover:text-brand-ink text-center transition py-1"
               hidden={administrative || isResetMode || !!twoFactorMode}
             >

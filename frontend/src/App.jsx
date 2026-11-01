@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import DistributorArea from './components/DistributorArea';
 import Navbar from './components/Navbar';
 import ProductCard from './components/ProductCard';
 import ProductModal from './components/ProductModal';
@@ -342,6 +343,8 @@ export default function App() {
           </div>
         )}
 
+        {currentView === 'distribuidores' && <DistributorArea user={user} />}
+
         {currentView === 'checkout' && <CheckoutPage cart={cart} user={user} onOpenAuth={() => setIsAuthOpen(true)} onRequireVerification={() => { setCurrentView('minha-conta'); setEmailVerificationNotice('Confirme seu email para continuar a compra.'); }} onPaid={() => { setCart([]); loadCatalog(); }} onBack={() => setCurrentView('home')} onOrders={() => setCurrentView('pedidos')} />}
 
         {/* TELA 2: RECOMENDADOS (/recomendados) */}
@@ -514,7 +517,8 @@ export default function App() {
         onRegisterSuccess={(authUser) => {
           setUser(authUser);
           setIsAuthOpen(false);
-          setIsProfileOpen(true);
+          if (authUser.is_distributor) setCurrentView('distribuidores');
+          else setIsProfileOpen(true);
         }}
       />
 

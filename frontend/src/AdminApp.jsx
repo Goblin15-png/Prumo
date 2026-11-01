@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import SupportPanel from './components/SupportPanel';
+import { adminSupportService } from './services/distributorService';
 import AdminDashboard from './components/AdminDashboard';
 import AdminProductForm from './components/AdminProductForm';
 import RegisterQuestionnaire from './components/RegisterQuestionnaire';
@@ -12,6 +14,7 @@ export default function AdminApp() {
   const [error, setError] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [view, setView] = useState('dashboard');
   const [refresh, setRefresh] = useState(0);
 
   useEffect(() => {
@@ -26,6 +29,7 @@ export default function AdminApp() {
       await ensureAdminCsrfCookie();
       await adminApi.post('/admin/auth/logout');
       setUser(null);
+      setView('dashboard');
       setFormOpen(false);
       setEditing(null);
     } catch (error) {
@@ -45,10 +49,14 @@ export default function AdminApp() {
     </header>
     {error && <p role="alert" className="mx-auto max-w-3xl p-5 text-danger-ink">{error}</p>}
     {loading ? <p role="status" className="p-8">Verificando acesso…</p> : user ? <>
-      <AdminDashboard user={user} catalogRefreshKey={refresh}
+      <nav aria-label="Painel administrativo" className="mx-auto flex max-w-7xl gap-3 px-5 pt-6">
+        <button type="button" aria-pressed={view === 'dashboard'} onClick={() => setView('dashboard')} className="rounded-xl border border-line px-4 py-2 text-sm">Visão geral</button>
+        {user.admin_permissions?.includes('support.view') && <button type="button" aria-pressed={view === 'support'} onClick={() => setView('support')} className="rounded-xl bg-brand-ink px-4 py-2 text-sm text-white">Suporte</button>}
+      </nav>
+      {view === 'support' && user.admin_permissions?.includes('support.view') ? <main className="mx-auto max-w-7xl px-5 py-8"><SupportPanel key={user.id} service={adminSupportService} administrative canReply={user.admin_permissions.includes('support.reply')} canManage={user.admin_permissions.includes('support.manage')} /></main> : <AdminDashboard user={user} catalogRefreshKey={refresh}
         onOpenProductForm={() => { setEditing(null); setFormOpen(true); }}
         onEditProduct={(product) => { setEditing(product); setFormOpen(true); }}
-        onProductDeleted={() => setRefresh((value) => value + 1)} />
+        onProductDeleted={() => setRefresh((value) => value + 1)} />}
       <AdminProductForm key={editing?.id || 'new-product'} service={adminApi} existingProduct={editing}
         isOpen={formOpen && user.admin_permissions?.includes(editing ? 'products.update' : 'products.create')}
         onClose={() => { setFormOpen(false); setEditing(null); }}

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Auth\SessionContext;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\Cnpj;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -24,7 +25,18 @@ class AuthController extends Controller
      */
     public function register(Request $request): JsonResponse
     {
+        if (is_string($request->input('cnpj'))) {
+            $request->merge(['cnpj' => Cnpj::normalize($request->input('cnpj'))]);
+        }
+
         $validated = $request->validate([
+            'account_type' => ['sometimes', 'required', 'in:customer,distributor'],
+            'cnpj' => ['exclude_unless:account_type,distributor', 'required', 'string', 'max:14',
+                function ($attribute, $value, $fail) {
+                    if (! Cnpj::isValid($value)) {
+                        $fail('Informe um CNPJ válido. Confira os caracteres e os dígitos verificadores.');
+                    }
+                }],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:12', 'max:128', 'confirmed'],
@@ -37,6 +49,11 @@ class AuthController extends Controller
                 'password' => $validated['password'],
                 'role' => 'customer',
             ]);
+
+            $user->forceFill([
+                'is_distributor' => ($validated['account_type'] ?? 'customer') === 'distributor',
+                'cnpj' => $validated['cnpj'] ?? null,
+            ])->save();
 
             return $user;
         });

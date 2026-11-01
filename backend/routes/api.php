@@ -4,6 +4,9 @@ use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AdminSystemController;
 use App\Http\Controllers\Api\AdminTwoFactorController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\DistributorWorkspaceController;
+use App\Http\Controllers\Api\SupportController;
+use App\Http\Middleware\CheckDistributor;
 use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\GeminiController;
 use App\Http\Controllers\Api\MercadoPagoWebhookController;
@@ -113,6 +116,20 @@ Route::prefix('v1')->group(function () use ($localTestMode, $emailVerificationMi
 
     // 2. ROTAS AUTENTICADAS DE CLIENTES
     Route::middleware(['auth:sanctum', CheckCustomerRole::class])->group(function () use ($emailVerificationMiddleware) {
+        Route::prefix('distributor')->middleware([CheckDistributor::class, 'throttle:api'])->group(function () {
+            Route::get('/lots', fn () => response()->json(['lots' => []]));
+            Route::get('/workspace', [DistributorWorkspaceController::class, 'index']);
+            Route::post('/inventory', [DistributorWorkspaceController::class, 'saveInventory'])->middleware('throttle:20,1');
+            Route::put('/inventory/{id}', [DistributorWorkspaceController::class, 'saveInventory'])->whereNumber('id')->middleware('throttle:20,1');
+            Route::delete('/inventory/{id}', [DistributorWorkspaceController::class, 'deleteInventory'])->whereNumber('id')->middleware('throttle:20,1');
+            Route::post('/plans', [DistributorWorkspaceController::class, 'savePlan'])->middleware('throttle:20,1');
+            Route::put('/plans/{id}', [DistributorWorkspaceController::class, 'savePlan'])->whereNumber('id')->middleware('throttle:20,1');
+            Route::delete('/plans/{id}', [DistributorWorkspaceController::class, 'deletePlan'])->whereNumber('id')->middleware('throttle:20,1');
+            Route::get('/support', [SupportController::class, 'index']);
+            Route::get('/support/{id}', [SupportController::class, 'show'])->whereNumber('id');
+            Route::post('/support', [SupportController::class, 'store'])->middleware('throttle:10,1');
+            Route::post('/support/{id}/messages', [SupportController::class, 'reply'])->whereNumber('id')->middleware('throttle:20,1');
+        });
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
@@ -134,6 +151,10 @@ Route::prefix('v1')->group(function () use ($localTestMode, $emailVerificationMi
 
     // 3. ROTAS DO PAINEL: somente sessão administrativa; não aceita bearer token.
     Route::prefix('admin')->middleware(['auth:admin', CheckAdminRole::class, AuditAdminActions::class, 'throttle:admin'])->group(function () {
+        Route::get('/support', [SupportController::class, 'index'])->name('admin.support.index')->middleware('can:support.view');
+        Route::get('/support/{id}', [SupportController::class, 'show'])->whereNumber('id')->name('admin.support.show')->middleware('can:support.view');
+        Route::post('/support/{id}/messages', [SupportController::class, 'reply'])->whereNumber('id')->name('admin.support.reply')->middleware('can:support.reply');
+        Route::patch('/support/{id}/status', [SupportController::class, 'status'])->whereNumber('id')->name('admin.support.status')->middleware('can:support.manage');
         Route::get('/system-status', AdminSystemController::class)->middleware('can:system.view');
 
         // CRUD & Gestão de Produtos

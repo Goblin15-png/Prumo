@@ -1,9 +1,14 @@
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createRequire } from 'node:module';
 import { defineConfig } from '../frontend/node_modules/vite/dist/node/index.js';
-import react from '../frontend/node_modules/@vitejs/plugin-react/dist/index.js';
 import tailwindcss from '../frontend/node_modules/@tailwindcss/postcss/dist/index.mjs';
 
 const directory = (path) => fileURLToPath(new URL(path, import.meta.url));
+// Carregar o plugin na sua localização original preserva a resolução dos
+// imports dinâmicos (react-refresh/babel) nas dependências do frontend.
+const frontendRequire = createRequire(new URL('../frontend/package.json', import.meta.url));
+const reactPluginUrl = pathToFileURL(frontendRequire.resolve('@vitejs/plugin-react')).href;
+const { default: react } = await import(reactPluginUrl);
 
 export default defineConfig({
   root: directory('./'),
