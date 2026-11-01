@@ -62,3 +62,13 @@ O preenchimento por CEP também pode ser experimentado nessa prévia: digite `00
 Para consultar **CEPs reais pelo ViaCEP**, execute `npm --prefix testes run local -- --real-cep` (ou `npm --prefix testes run local -- 4181 --real-cep` para outra porta). Essa opção libera apenas consultas de endereço ao ViaCEP; catálogo, contas, frete e pagamento continuam simulados, sem cobranças ou etiquetas. O aviso na tela identifica essa diferença. O site definitivo usa ViaCEP por padrão; Correios oficial continua disponível por configuração em `../CORREIOS_CEP.md`. O Melhor Envio real é configurado separadamente conforme `../MELHOR_ENVIO.md`.
 
 `browser/browser-postal-code-live.mjs` confere o preenchimento no navegador usando a prévia `--real-cep` na porta 4180 e o CEP público de exemplo do ViaCEP (`01001-000`). Esse teste é optativo, exige rede e não cria pedidos; use as mesmas variáveis do Playwright dos demais testes. A suíte automática habitual continua isolada.
+
+## Transporte Cloudflare → Laravel
+
+`npm --prefix testes run test:proxy` executa testes Node do Worker em `cloudflare/`, com fetch fictício. Cobre seleção de rotas/assets, configuração ausente/inválida, destino fixo, cadastro/corpo, cookies/CSRF, assinatura de webhook, cabeçalhos de encaminhamento, redirects sem repetição, cache desabilitado e erros do Laravel preservados. Não usa PHP, não cria contas e não faz chamadas externas. O comando é separado da suíte de demo para que possa ser executado sem frontend/node_modules. A URL real e as etapas de homologação estão em [CLOUDFLARE.md](../CLOUDFLARE.md).
+
+## Diagnóstico público após deploy
+
+Com Node 22+, execute `npm --prefix testes run check:deploy`. Opcionalmente informe origens HTTPS: `npm --prefix testes run check:deploy -- https://FRONTEND https://BACKEND`. O comando faz somente GET de runtime-config e CSRF, sem criar contas ou consultar diretamente o banco. Não segue redirecionamentos, não reutiliza cookies e não imprime seus valores. CSRF pode inicializar uma sessão anônima no Laravel. Código de saída 1 indica falha de rede/contrato/configuração; não comprova falha do banco. Um resultado positivo também não homologa cadastro, email ou MFA.
+
+Os defaults são os domínios públicos informados pela equipe. Para homologação use ambos os domínios de homologação. `npm --prefix testes run test:deploy` testa o diagnóstico com respostas fictícias, sem rede.

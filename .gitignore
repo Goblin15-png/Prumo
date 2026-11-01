@@ -22,3 +22,8 @@ backend/storage/
 backend/bootstrap/cache/*.php
 backend/.phpunit.cache/
 backend/.phpunit.result.cache
+
+# Configuração local do Worker
+.dev.vars
+.dev.vars.*
+.wrangler/
