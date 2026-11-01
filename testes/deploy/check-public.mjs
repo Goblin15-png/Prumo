@@ -50,20 +50,17 @@ function publicOrigin(value) {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
-    const frontend = publicOrigin(process.argv[2] || 'https://prumo.bernadin15-dev.workers.dev');
-    const backend = publicOrigin(process.argv[3] || 'https://prumo-backend-x6w9.onrender.com');
+    const base = publicOrigin(process.argv[2] || 'https://prumo-backend-x6w9.onrender.com');
     let passed = true;
-    for (const [name,base] of [['Laravel',backend],['Cloudflare',frontend]]) {
-      console.log(`${name}: ${base}`);
-      for (const result of await checkPublic(base,frontend)) {
-        console.log(`${result.ok ? 'OK' : 'FALHOU'} ${result.path}: ${result.message}`);
-        passed &&= result.ok;
-      }
+    console.log(`Laravel (loja, painel e API): ${base}`);
+    for (const result of await checkPublic(base,base)) {
+      console.log(`${result.ok ? 'OK' : 'FALHOU'} ${result.path}: ${result.message}`);
+      passed &&= result.ok;
     }
     console.log('Verificação GET somente: não testa criação de conta, email, MFA ou acesso direto ao PostgreSQL.');
     process.exitCode = passed ? 0 : 1;
   } catch {
-    console.error('Uso: npm --prefix testes run check:deploy -- https://FRONTEND https://BACKEND (somente origens HTTPS, sem credenciais).');
+    console.error('Uso: npm --prefix testes run check:deploy -- https://SITE (somente origens HTTPS, sem credenciais).');
     process.exitCode = 1;
   }
 }

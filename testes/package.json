@@ -10,7 +10,6 @@
     "test": "node --test demo/*.test.js",
     "local": "node scripts/local-preview.mjs",
     "test:php": "cd ../backend && php vendor/bin/phpunit --configuration ../testes/backend/phpunit.xml",
-    "test:proxy": "node --test cloudflare/*.test.mjs",
     "check:deploy": "node deploy/check-public.mjs",
     "test:deploy": "node --test deploy/*.test.mjs"
   }
