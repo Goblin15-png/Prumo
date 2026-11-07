@@ -18,6 +18,8 @@ return new class extends Migration
             } else {
                 $table->enum('payment_method', ['pix', 'credit_card', 'boleto'])->nullable()->change();
             }
+            // O cast encrypted:array grava texto cifrado, não JSON.
+            $table->text('shipping_address')->nullable()->change();
             $table->string('payment_preference_id', 150)->nullable();
             $table->text('payment_checkout_url')->nullable();
             $table->uuid('checkout_idempotency_key')->nullable()->unique();
@@ -69,6 +71,8 @@ return new class extends Migration
         Schema::dropIfExists('payment_webhook_events');
         $postgres = DB::getDriverName() === 'pgsql';
         Schema::table('orders', function (Blueprint $table) use ($postgres) {
+            // Os endereços foram decifrados acima antes de restaurar JSON.
+            $table->json('shipping_address')->nullable()->change();
             $table->dropUnique(['checkout_idempotency_key']);
             $table->dropColumn([
                 'payment_preference_id',

@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->text('two_factor_secret')->nullable();
             $table->timestamp('two_factor_confirmed_at')->nullable();
-            $table->json('two_factor_recovery_codes')->nullable();
+            $table->text('two_factor_recovery_codes')->nullable();
             $table->unsignedBigInteger('two_factor_last_step')->nullable();
         });
     }

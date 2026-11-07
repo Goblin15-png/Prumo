@@ -18,7 +18,7 @@ Construir e evoluir um e-commerce de **blends**, com experiência de compra clar
 
 - **Frontend:** React 18, Vite 6, Tailwind CSS 4, Axios.
 - **Backend:** PHP 8.2+, Laravel 12, Laravel Sanctum, MFA TOTP (`pragmarx/google2fa`).
-- **Hospedagem confirmada em 01/11/2026:** Laravel no Render serve a interface React compilada, o painel e a API no mesmo domínio; PostgreSQL é acessado somente pelo Laravel. Cloudflare foi retirado do fluxo a pedido do responsável. Dockerfile da raiz exige contexto do repositório completo. Consulte `LARAVEL_HOSTING.md`; documentação Vercel antiga é histórica. Prévia/testes continuam com SQLite isolado e não comprovam homologação de produção.
+- **Hospedagem confirmada em 01/11/2026:** Laravel no Render serve a interface React compilada, o painel e a API no mesmo domínio; MySQL é o destino escolhido em 06/11/2026 e será acessado somente pelo Laravel; a troca do banco remoto ainda está pendente (MYSQL.md). Cloudflare foi retirado do fluxo a pedido do responsável. Dockerfile da raiz exige contexto do repositório completo. Consulte `LARAVEL_HOSTING.md`; documentação Vercel antiga é histórica. Prévia/testes continuam com SQLite isolado e não comprovam homologação de produção.
 - **Node.js:** utilizado no ecossistema/frontend; **não presumir um servidor Node independente** sem confirmar sua existência e responsabilidade no repositório. Se serviços Node forem necessários, discutir contratos antes de criá-los.
 - **Integrações planejadas/atuais:** Mercado Pago para pagamentos e Melhor Envio para frete.
 - **Estrutura observada no ZIP:** `frontend/`, `backend/`, `SECURITY.md`, `DEPLOYMENT.md` e `AGENTS.md`.
@@ -58,7 +58,7 @@ Os chats são usados para evitar misturar assuntos. Antes de mudanças transvers
 | **Site / frontend** | React, UX, páginas, catálogo, carrinho, painel visual, dados fictícios, testes de interface e backend estritamente necessário às telas. |
 | **Pagamentos, frete e checkout** | Mercado Pago, checkout transparente, Melhor Envio, cálculo de frete, pedidos, webhooks, idempotência e conciliação. |
 | **Segurança / administração** | Login, MFA, sessão, RBAC, proteção de APIs, auditoria, segurança do painel e revisão de vulnerabilidades. |
-| **Infraestrutura / hospedagem** | Frontend Vercel + Laravel em hospedagem PHP + PostgreSQL gerenciado definidos. Escolha dos provedores restantes, domínios, redes, deploy, ambientes e operação ficam na trilha de infraestrutura. |
+| **Infraestrutura / hospedagem** | Laravel serve frontend e API no mesmo domínio; MySQL é o destino escolhido, com provedor e transferência de dados pendentes. Escolha dos provedores restantes, domínios, redes, deploy, ambientes e operação ficam na trilha de infraestrutura. |
 
 **Regra:** um chat pode identificar dependência de outra área, mas não deve redesenhar unilateralmente os contratos ou implementar grandes alterações fora do seu escopo.
 

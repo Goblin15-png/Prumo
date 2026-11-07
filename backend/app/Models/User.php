@@ -44,13 +44,10 @@ class User extends Authenticatable implements MustVerifyEmailContract
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-<<<<<<< HEAD
         'is_distributor' => 'boolean',
-=======
         'email_code_expires_at' => 'datetime',
         'email_code_sent_at' => 'datetime',
         'email_code_attempts' => 'integer',
->>>>>>> 6a0d5e60928d359454fc8e8e9c5a8171d57a4139
         'password' => 'hashed',
         'two_factor_secret' => 'encrypted',
         'two_factor_recovery_codes' => 'encrypted:array',

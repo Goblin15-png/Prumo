@@ -158,7 +158,7 @@ class CatalogRulesTest extends TestCase
     public function test_failed_audit_rolls_back_product_and_complaint_links(): void
     {
         $symptom = Symptom::create(['name' => 'Alvo A']);
-        DB::unprepared("CREATE TRIGGER fail_audit BEFORE INSERT ON security_audit_logs BEGIN SELECT RAISE(ABORT, 'audit unavailable'); END");
+        $this->failInsertsTo('security_audit_logs');
         $this->postJson('/api/v1/admin/products', $this->payload(['symptom_ids' => [$symptom->id]]))->assertStatus(503);
         $this->assertDatabaseCount('products', 0);
         $this->assertDatabaseCount('product_symptom', 0);

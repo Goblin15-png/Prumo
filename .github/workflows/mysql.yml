@@ -1,0 +1,43 @@
+name: MySQL compatibility
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'testes/backend/**'
+      - '.github/workflows/mysql.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mysql:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root-test-only-password
+          MYSQL_DATABASE: protocolar_test
+          MYSQL_USER: protocolar_test
+          MYSQL_PASSWORD: test-only-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, dom, intl, pdo_mysql, pdo_sqlite, bcmath
+          coverage: none
+      - run: mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
+        working-directory: backend
+      - run: composer install --no-interaction --prefer-dist
+        working-directory: backend
+      - run: cp .env.example .env && php artisan key:generate
+        working-directory: backend
+      - run: php vendor/bin/phpunit --configuration ../testes/backend/phpunit.mysql.xml
+        working-directory: backend

@@ -1,3 +1,5 @@
+> Banco de destino atualizado para MySQL em 06/11/2026. Consulte [MYSQL.md](MYSQL.md); transferência de dados e troca em produção permanecem pendentes.
+
 > **Configuração atual (01/11/2026): Laravel no Render serve loja React, painel e API no mesmo endereço. Siga [LARAVEL_HOSTING.md](LARAVEL_HOSTING.md). As instruções de frontend separado/Vercel abaixo são históricas e não devem ser aplicadas ao deploy atual.**
 
 # Preparação para hospedagem pública

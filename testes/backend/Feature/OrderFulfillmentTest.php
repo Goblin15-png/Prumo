@@ -163,12 +163,12 @@ class OrderFulfillmentTest extends TestCase
     {
         $order = $this->order();
         foreach (['order_fulfillment_events', 'security_audit_logs'] as $table) {
-            DB::unprepared("CREATE TRIGGER fail_fulfillment_audit BEFORE INSERT ON {$table} BEGIN SELECT RAISE(ABORT, 'audit unavailable'); END");
+            $restoreInserts = $this->failInsertsTo($table);
             $this->setStatus($order, 'delivered')->assertStatus(503);
             $this->assertSame(0, $order->fresh()->fulfillment_revision);
             $this->assertNull($order->fresh()->fulfillment_status);
             $this->assertDatabaseCount('order_fulfillment_events', 0);
-            DB::unprepared('DROP TRIGGER fail_fulfillment_audit');
+            $restoreInserts();
         }
     }
 

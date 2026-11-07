@@ -1,3 +1,5 @@
+> Atualização de 06/11/2026: MySQL foi escolhido como destino do banco. A configuração está em [MYSQL.md](MYSQL.md). O texto abaixo registra o ambiente anterior; a troca do banco remoto e a transferência de dados ainda não foram executadas. Não publicar apenas trocando DB_CONNECTION: o startup aplica migrações no banco configurado.
+
 # Loja, painel e API no Laravel — Render
 
 Decisão de 01/11/2026: um único serviço Laravel serve React compilado, painel administrativo, autenticação e API. React continua sendo a interface; não existe servidor Node em produção. Node é usado somente no estágio de build. PostgreSQL permanece privado ao backend. Cloudflare e Vercel não são necessários para este fluxo.

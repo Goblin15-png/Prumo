@@ -138,7 +138,7 @@ class AdminPermissionsTest extends TestCase
     {
         $admin = $this->admin(null);
         $admin->createToken('old-token');
-        DB::unprepared("CREATE TRIGGER fail_audit BEFORE INSERT ON security_audit_logs BEGIN SELECT RAISE(ABORT, 'audit unavailable'); END");
+        $this->failInsertsTo('security_audit_logs');
         try {
             $this->artisan('admin:assign-profile', ['email' => $admin->email, 'profile' => 'owner'])
                 ->expectsConfirmation('Alterar o perfil deste administrador para owner e revogar as sessões existentes?', 'yes')->run();

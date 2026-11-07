@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-<<<<<<< HEAD
 import DistributorArea from './components/DistributorArea';
-=======
 import EmailConfirmation from './components/EmailConfirmation';
->>>>>>> 6a0d5e60928d359454fc8e8e9c5a8171d57a4139
 import Navbar from './components/Navbar';
 import ProductCard from './components/ProductCard';
 import ProductModal from './components/ProductModal';

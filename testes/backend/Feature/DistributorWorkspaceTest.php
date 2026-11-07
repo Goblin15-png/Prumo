@@ -24,7 +24,7 @@ class DistributorWorkspaceTest extends TestCase
     {
         $user = User::factory()->create(['role' => 'admin']);
         $user->forceFill(['admin_profile' => $profile])->save();
-        $this->actingAs($user, 'admin')->withAdminSession([
+        $this->actingAs($user, 'admin')->withHeader('Origin', 'http://localhost:3000')->withAdminSession([
             'admin_mfa_confirmed_user_id' => $user->id,
             'admin_mfa_access_version' => 0, 'admin_mfa_confirmed_profile' => $profile,
             'admin_mfa_confirmed_at' => now()->getTimestamp(),

@@ -127,7 +127,7 @@ class AdminProvisioningTest extends TestCase
 
     public function test_failed_audit_rolls_back_the_new_admin(): void
     {
-        DB::unprepared("CREATE TRIGGER fail_audit BEFORE INSERT ON security_audit_logs BEGIN SELECT RAISE(ABORT, 'audit unavailable'); END");
+        $this->failInsertsTo('security_audit_logs');
         $this->artisan('admin:create', ['email' => 'owner@example.test', 'profile' => 'owner'])
             ->expectsQuestion('Nome completo do administrador', 'Responsável')
             ->expectsQuestion('Senha (12 a 128 caracteres)', 'a-long-test-password')

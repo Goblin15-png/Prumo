@@ -78,3 +78,7 @@ Com build da loja e Playwright externo: `PLAYWRIGHT_MODULE=/caminho/playwright/i
 ## Loja servida pelo Laravel
 
 `StorefrontHostingTest` verifica rotas de loja/painel/reset, ausência de build, isolamento de API/arquivos e recuperação no domínio configurado. O workflow também compila a imagem Docker unificada e verifica que HTML, assets e index.php estão presentes sem fontes de testes ou .env. `LARAVEL_HOSTING.md` descreve o contexto de build.
+
+## MySQL
+
+A suíte padrão continua isolada em SQLite. A configuração `backend/phpunit.mysql.xml` é exclusiva para MySQL descartável de testes em loopback; o workflow `.github/workflows/mysql.yml` provisiona esse serviço. Ela pode recriar tabelas: nunca use banco operacional. Preparação e limites em [MYSQL.md](../MYSQL.md).
